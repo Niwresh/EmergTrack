@@ -12,7 +12,7 @@ import {
     const navigation = useIonRouter();
   
     const doLogin = () => {
-        navigation.push('/EmergeTrack/app','forward','replace');
+        navigation.push('/EmergTrack/app','forward','replace');
     }
     return (
       <IonPage>

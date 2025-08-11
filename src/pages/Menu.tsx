@@ -1,13 +1,11 @@
 
 import { 
     IonButton,
-    IonButtons,
-      IonContent, 
+    IonContent, 
       IonHeader, 
       IonIcon, 
       IonItem, 
       IonMenu, 
-      IonMenuButton, 
       IonMenuToggle, 
       IonPage, 
       IonRouterOutlet, 
@@ -23,8 +21,8 @@ import {
   
   const Menu: React.FC = () => {
     const path = [
-        {name:'Home', url: '/EmergeTrack/app/home', icon: homeOutline},
-        {name:'About', url: '/EmergeTrack/app/about', icon: rocketOutline},
+        {name:'Home', url: '/EmergTrack/app/home', icon: homeOutline},
+        {name:'About', url: '/EmergTrack/app/about', icon: rocketOutline},
     ]
   
     return (
@@ -49,7 +47,7 @@ import {
                         ))}
   
                         {/*Logout Button*/}
-                        <IonButton routerLink="/EmergeTrack" routerDirection="back" expand="full">
+                        <IonButton routerLink="/EmergTrack" routerDirection="back" expand="full">
                             <IonIcon icon={logOutOutline} slot="start"> </IonIcon>
                         Logout
                         </IonButton>
@@ -58,11 +56,11 @@ import {
                 </IonMenu>
                 
                 <IonRouterOutlet id="main">
-                    <Route exact path="/EmergeTrack/app/home" component={Home} />
-                    <Route exact path="/EmergeTrack/app/about" component={About} />
+                    <Route exact path="/EmergTrack/app/home" component={Home} />
+                    <Route exact path="/EmergTrack/app/about" component={About} />
   
-                    <Route exact path="/EmergeTrack/app">
-                        <Redirect to="/EmergeTrack/app/home"/>
+                    <Route exact path="/EmergTrack/app">
+                        <Redirect to="/EmergTrack/app/home"/>
                     </Route>
                 </IonRouterOutlet>
   
