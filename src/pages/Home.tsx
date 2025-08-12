@@ -1,27 +1,61 @@
 import { 
+  IonButton,
     IonButtons,
       IonContent, 
       IonHeader, 
+      IonIcon, 
+      IonLabel, 
       IonMenuButton, 
       IonPage, 
+      IonRouterOutlet, 
+      IonTabBar, 
+      IonTabButton, 
+      IonTabs, 
       IonTitle, 
       IonToolbar 
   } from '@ionic/react';
+import { IonReactRouter } from '@ionic/react-router';
+import { bookOutline, search, star } from 'ionicons/icons';
+import { Route, Redirect } from 'react-router';
+
+import Favorites from './Home-tabs/Favorites';
+import Feed from './Home-tabs/Feed';
+import Search from './Home-tabs/Search';
   
   const Home: React.FC = () => {
+
+    const tabs = [
+      {name:'Feed', tab:'feed',url: '/EmergTrack/app/home/feed', icon: bookOutline},
+      {name:'Search', tab:'search', url: '/EmergTrack/app/home/search', icon: search},
+      {name:'Favorites',tab:'favorites', url: '/EmergTrack/app/home/favorites', icon: star},
+    ]
+    
     return (
-      <IonPage>
-        <IonHeader>
-          <IonToolbar>
-            <IonButtons slot='start'>
-              <IonMenuButton></IonMenuButton>
-            </IonButtons>
-            <IonTitle>Home</IonTitle>
-          </IonToolbar>
-        </IonHeader>
-        <IonContent fullscreen>
-        </IonContent>
-      </IonPage>
+      <IonReactRouter>
+        <IonTabs>
+          <IonTabBar slot="bottom">
+
+            {tabs.map((item, index) => (
+              <IonTabButton key={index} tab={item.tab} href={item.url}>
+                <IonIcon icon={item.icon} />
+                <IonLabel>{item.name}</IonLabel>
+              </IonTabButton>
+            ))}
+            
+          </IonTabBar>
+        <IonRouterOutlet>
+
+          <Route exact path="/EmergTrack/app/home/feed" component={Feed} />
+          <Route exact path="/EmergTrack/app/home/search" component={Search} />
+          <Route exact path="/EmergTrack/app/home/favorites" component={Favorites} />
+
+          <Route exact path="/EmergTrack/app/home">
+            <Redirect to="/EmergTrack/app/home/feed" />
+          </Route>
+
+        </IonRouterOutlet>
+        </IonTabs>
+      </IonReactRouter>
     );
   };
   
