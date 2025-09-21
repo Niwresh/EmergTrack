@@ -9,46 +9,67 @@ import {
   IonText, 
   useIonRouter, 
   IonAlert, 
-  IonModal, 
   IonToast
 } from '@ionic/react';
-import { personOutline, lockClosedOutline, logoGoogle, logoFacebook } from 'ionicons/icons';
-import '../Assets/Login.css';  // import your CSS file
+import { mailOutline, lockClosedOutline, logoGoogle, logoFacebook } from 'ionicons/icons';
+import { supabase } from '../utils/supabaseClients';  // your Supabase client file
+import bcrypt from 'bcryptjs';
+import '../Assets/Login.css';
 
 const Login: React.FC = () => {
   const navigation = useIonRouter();
 
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
-  const validUsername = 'user123';
-  const validPassword = 'password123';
-
-  const doLogin = () => {
-    if (!username || !password) {
+  const doLogin = async () => {
+    if (!email || !password) {
       setShowAlert(true);
-    } else {
-      if (username === validUsername && password === validPassword) {
-        setShowSuccessModal(true);
-        setShowToast(true);
-      } else {
-        setLoginError(true);
-      }
+      return;
     }
-  };
 
-  const handleAlertConfirm = () => {
-    setShowAlert(false);
-  };
+    try {
+      // fetch parent by email
+      const { data: parent, error } = await supabase
+        .from('parents')
+        .select('*')
+        .eq('email', email)
+        .single();
 
-  const handleSuccessModalClose = () => {
-    setShowSuccessModal(false);
-    navigation.push('/EmergTrack/app', 'forward', 'replace');
+      if (error || !parent) {
+        setLoginError(true);
+        return;
+      }
+
+      // compare password (assuming it's hashed in DB)
+      const isValidPassword = await bcrypt.compare(password, parent.password);
+
+      if (!isValidPassword) {
+        setLoginError(true);
+        return;
+      }
+
+      // ✅ Insert login record into logs
+      await supabase.from('logs').insert([
+        {
+          parent_id: parent.id,
+          full_name: parent.full_name,
+          email: parent.email
+        }
+      ]);
+
+      // ✅ Directly go to dashboard
+      setShowToast(true);
+      navigation.push('/EmergTrack/app', 'forward', 'replace');
+
+    } catch (err) {
+      console.error(err);
+      setLoginError(true);
+    }
   };
 
   return (
@@ -58,7 +79,7 @@ const Login: React.FC = () => {
         {/* Logo + Title */}
         <div className="logo">
           <img 
-            src="https://scontent.fceb2-1.fna.fbcdn.net/v/t1.15752-9/538959922_3879256525543014_5947897526488506572_n.jpg?stp=dst-jpg_s480x480_tt6&_nc_cat=108&ccb=1-7&_nc_sid=0024fc&_nc_eui2=AeGynUFrqy6HMQnXmqCjSCJeTvm_N8x3AqRO-b83zHcCpP-Ip8SXSsJd_SNQge144UGsWT4DWWHzQ59QQ_PNn0IN&_nc_ohc=8q4ht97k4bMQ7kNvwErOj_F&_nc_oc=AdnQMGnjKlcTgJF49ELRyhxBQl5fcWRc9O2DYaRWzmQrMPBUAiSt_0e3AMfp4UiqbfU&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fceb2-1.fna&oh=03_Q7cD3QFPkUCvtNcJybLzBKKnZUkPjqCJhZsZNI8tSuEwBwK_Xw&oe=68F6D928" 
+            src="https://scontent.fceb2-1.fna.fbcdn.net/v/t1.15752-9/538959922_3879256525543014_5947897526488506572_n.jpg"
             alt="App Logo" 
           />
           <h2>PARENT LOGIN</h2>
@@ -67,13 +88,14 @@ const Login: React.FC = () => {
         {/* FORM CONTAINER */}
         <div className="form-container">
 
-          {/* Username Field */}
+          {/* Email Field */}
           <div className="input-group">
-            <IonIcon icon={personOutline} className="input-icon" />
+            <IonIcon icon={mailOutline} className="input-icon" />
             <IonInput
-              placeholder="Enter username"
-              value={username}
-              onIonChange={(e) => setUsername(e.detail.value!)}
+              placeholder="Enter email"
+              value={email}
+              onIonChange={(e) => setEmail(e.detail.value!)}
+              type="email"
             />
           </div>
 
@@ -98,7 +120,7 @@ const Login: React.FC = () => {
           {loginError && (
             <IonText color="danger">
               <p style={{ marginBottom: '10px' }}>
-                Incorrect username or password. Please try again.
+                Incorrect email or password. Please try again.
               </p>
             </IonText>
           )}
@@ -136,14 +158,6 @@ const Login: React.FC = () => {
 
         </div>
 
-        {/* Modal on Success */}
-        <IonModal isOpen={showSuccessModal} onDidDismiss={handleSuccessModalClose}>
-          <IonContent className="ion-padding">
-            <h2>Login Successful!</h2>
-            <IonButton expand="block" onClick={handleSuccessModalClose}>Go to Dashboard</IonButton>
-          </IonContent>
-        </IonModal>
-
         {/* Toast on Success */}
         <IonToast
           isOpen={showToast}
@@ -160,7 +174,7 @@ const Login: React.FC = () => {
           message="All fields are required. Please fill in all fields."
           buttons={[{
             text: 'OK',
-            handler: handleAlertConfirm,
+            handler: () => setShowAlert(false),
           }]}
         />
 
