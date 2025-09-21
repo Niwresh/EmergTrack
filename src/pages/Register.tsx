@@ -8,48 +8,86 @@ import {
   useIonRouter
 } from '@ionic/react';
 import '../Assets/Register.css'; // import your CSS
+import { supabase } from '../utils/supabaseClients'; // ✅ make sure you created this client
+import bcrypt from 'bcryptjs';
 
 const Register: React.FC = () => {
   const navigation = useIonRouter();
 
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const DoRegister = () => {
+  const DoRegister = async () => {
     setIsLoading(true);
 
-    if (!fullName || !username || !phoneNumber || !password || !confirmPassword) {
+    // ✅ Validation
+    if (!fullName || !username || !email || !password || !confirmPassword) {
       setAlertMessage("Please fill in all fields.");
-      setTimeout(() => {
-        setShowAlert(true);
-        setIsLoading(false);
-      }, 1000);
+      setShowAlert(true);
+      setIsLoading(false);
+      return;
+    }
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+      setAlertMessage("Please enter a valid email address.");
+      setShowAlert(true);
+      setIsLoading(false);
       return;
     }
 
     if (password !== confirmPassword) {
       setAlertMessage("Passwords do not match.");
-      setTimeout(() => {
-        setShowAlert(true);
-        setIsLoading(false);
-      }, 1000);
+      setShowAlert(true);
+      setIsLoading(false);
       return;
     }
 
-    setAlertMessage("Registration successful! Redirecting to login.");
-    setTimeout(() => {
+    try {
+      // ✅ Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // ✅ Insert into parents table
+      const { error } = await supabase
+        .from('parents')
+        .insert([
+          {
+            full_name: fullName,
+            username: username,
+            email: email,
+            password: hashedPassword,
+          },
+        ]);
+
+      if (error) {
+        console.error(error);
+        setAlertMessage(`Error: ${error.message}`);
+        setShowAlert(true);
+        setIsLoading(false);
+        return;
+      }
+
+      // ✅ Success
+      setAlertMessage("Registration successful! Redirecting to login.");
       setShowAlert(true);
       setIsLoading(false);
-    }, 1000);
-    setTimeout(() => {
-      navigation.push('/EmergTrack', 'forward', 'replace');
-    }, 3000);
+
+      setTimeout(() => {
+        navigation.push('/EmergTrack', 'forward', 'replace');
+      }, 2000);
+
+    } catch (err: unknown) {
+      console.error(err);
+      setAlertMessage("Something went wrong. Please try again.");
+      setShowAlert(true);
+      setIsLoading(false);
+    }
   };
 
   const DoLogin = () => {
@@ -62,8 +100,10 @@ const Register: React.FC = () => {
 
         {/* Logo */}
         <div className="logo">
-          <img src="https://scontent.fceb2-1.fna.fbcdn.net/v/t1.15752-9/538959922_3879256525543014_5947897526488506572_n.jpg?stp=dst-jpg_s480x480_tt6&_nc_cat=108&ccb=1-7&_nc_sid=0024fc&_nc_eui2=AeGynUFrqy6HMQnXmqCjSCJeTvm_N8x3AqRO-b83zHcCpP-Ip8SXSsJd_SNQge144UGsWT4DWWHzQ59QQ_PNn0IN&_nc_ohc=8q4ht97k4bMQ7kNvwErOj_F&_nc_oc=AdnQMGnjKlcTgJF49ELRyhxBQl5fcWRc9O2DYaRWzmQrMPBUAiSt_0e3AMfp4UiqbfU&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fceb2-1.fna&oh=03_Q7cD3QFPkUCvtNcJybLzBKKnZUkPjqCJhZsZNI8tSuEwBwK_Xw&oe=68F6D928" 
-          alt="App Logo" />
+          <img 
+            src="https://scontent.fceb2-1.fna.fbcdn.net/v/t1.15752-9/538959922_3879256525543014_5947897526488506572_n.jpg"
+            alt="App Logo" 
+          />
           <h2>PARENT REGISTER</h2>
         </div>
 
@@ -91,12 +131,12 @@ const Register: React.FC = () => {
           </div>
 
           <div className="input-group">
-            <span className="icon">📱</span>
+            <span className="icon">📧</span>
             <input
-              type="text"
-              placeholder="Phone Number"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
           </div>
 
