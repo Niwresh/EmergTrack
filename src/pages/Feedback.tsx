@@ -8,7 +8,7 @@ import {
       IonToolbar 
   } from '@ionic/react';
   
-  const Home: React.FC = () => {
+  const Feedback: React.FC = () => {
     return (
       <IonPage>
         <IonHeader>
@@ -25,4 +25,4 @@ import {
     );
   };
   
-  export default Home;
+  export default Feedback;
