@@ -10,6 +10,8 @@ export default defineConfig({
     react(),
     legacy()
   ],
+
+  base:"/EmergTrack",
   test: {
     globals: true,
     environment: 'jsdom',
