@@ -34,36 +34,31 @@ const Menu: React.FC = () => {
   ];
 
   const handleLogout = async () => {
-    const logId = localStorage.getItem('log_id');
-    if (logId) {
-      // Fetch login_time first to calculate duration
-      const { data: logData, error: fetchError } = await supabase
-        .from('logs')
-        .select('login_time')
-        .eq('id', logId)
-        .single();
+  const logId = localStorage.getItem('log_id');
+  console.log("Logging out with logId:", logId); // debug
 
-      if (!fetchError && logData) {
-        const logoutTime = new Date();
-        const loginTime = new Date(logData.login_time);
-        const durationMs = logoutTime.getTime() - loginTime.getTime();
-        const durationSeconds = Math.floor(durationMs / 1000);
+  if (logId) {
+    const { error } = await supabase
+      .from('logs')
+      .update({
+        logout_time: new Date().toISOString() // ✅ set logout_time
+      })
+      .eq('id', parseInt(logId, 10)); // ✅ make sure it's number
 
-        await supabase
-          .from('logs')
-          .update({
-            logout_time: logoutTime.toISOString(),
-            session_duration: `${durationSeconds} seconds`
-          })
-          .eq('id', logId);
-
-        localStorage.removeItem('log_id');
-      }
+    if (error) {
+      console.error("Error updating logout_time:", error);
+    } else {
+      console.log("Logout time updated successfully");
     }
 
-    // redirect back to login
-    navigation.push('/EmergTrack', 'back', 'replace');
-  };
+    // clear stored logId
+    localStorage.removeItem('log_id');
+  }
+
+  // redirect back to login
+  navigation.push('/EmergTrack', 'back', 'replace');
+};
+
 
   return (
     <IonPage>
