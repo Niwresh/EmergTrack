@@ -1,0 +1,153 @@
+/* Container */
+.login-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;  /* centers vertically */
+  min-height: 100vh;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+/* Logo + Title */
+.logo {
+  text-align: center;
+  margin-bottom: 25px;
+}
+.logo ion-avatar {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 10px auto;
+  background: #f1f1f1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.logo h2 {
+  font-weight: bold;
+  font-size: 22px;
+  color: #333;
+}
+
+/* Input Group */
+.input-group {
+  display: flex;
+  align-items: center;
+  background: #ffeeee;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  width: 100%;
+  max-width: 350px;
+  box-sizing: border-box;
+}
+.input-icon {
+  font-size: 20px;
+  margin-right: 8px;
+  color: #444;
+}
+.toggle-eye {
+  font-size: 20px;
+  margin-left: auto;
+  cursor: pointer;
+  color: #444;
+}
+ion-input {
+  flex: 1;
+  font-size: 16px;
+  --background: transparent;
+}
+
+/* Login Button */
+.login-btn {
+  width: 100%;
+  max-width: 350px;
+  --background: #ff8095;
+  --color: white;
+  font-weight: bold;
+  border-radius: 25px;
+  margin-bottom: 15px;
+}
+
+/* Signup Link (if needed) */
+.signup-link {
+  font-size: 14px;
+  text-align: center;
+}
+.signup-link a {
+  color: red;
+  font-style: italic;
+  text-decoration: none;
+}
+
+/* Responsive Design */
+@media (min-width: 768px) {
+  .logo ion-avatar {
+    width: 120px;
+    height: 120px;
+  }
+  .logo h2 {
+    font-size: 26px;
+  }
+  .input-group {
+    max-width: 400px;
+    padding: 14px;
+  }
+  .login-btn {
+    max-width: 400px;
+    font-size: 18px;
+  }
+}
+
+/* Form container */
+.form-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;   /* center horizontally */
+  justify-content: center;
+  width: 100%;
+}
+
+/* Divider */
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: #999;
+  margin: 15px 0;
+}
+.divider::before, .divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #ddd;
+}
+.divider:not(:empty)::before {
+  margin-right: 0.75em;
+}
+.divider:not(:empty)::after {
+  margin-left: 0.75em;
+}
+
+/* Social Buttons */
+.google-btn {
+  --background: #fff;
+  --color: #444;
+  border: 1px solid #ddd;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+.google-btn ion-icon {
+  color: #db4437;
+}
+
+.facebook-btn {
+  --background: #1877f2;
+  --color: #fff;
+  font-weight: bold;
+}
+.facebook-btn ion-icon {
+  color: #fff;
+}
+
