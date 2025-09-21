@@ -33,7 +33,7 @@ const Login: React.FC = () => {
     }
 
     try {
-      // fetch parent by email
+      // ✅ fetch parent by email
       const { data: parent, error } = await supabase
         .from('parents')
         .select('*')
@@ -45,7 +45,7 @@ const Login: React.FC = () => {
         return;
       }
 
-      // compare password (assuming it's hashed in DB)
+      // ✅ compare password (hashed in DB)
       const isValidPassword = await bcrypt.compare(password, parent.password);
 
       if (!isValidPassword) {
@@ -53,16 +53,27 @@ const Login: React.FC = () => {
         return;
       }
 
-      // ✅ Insert login record into logs
-      await supabase.from('logs').insert([
-        {
-          parent_id: parent.id,
-          full_name: parent.full_name,
-          email: parent.email
-        }
-      ]);
+      // ✅ Insert login record into logs & capture id
+      const { data: log, error: logError } = await supabase
+        .from('logs')
+        .insert([
+          {
+            parent_id: parent.id,
+            full_name: parent.full_name,
+            email: parent.email
+          }
+        ])
+        .select('id') // return inserted id
+        .single();
 
-      // ✅ Directly go to dashboard
+      if (logError) {
+        console.error("Log insert error:", logError);
+      } else if (log) {
+        // ✅ store log id in localStorage for logout tracking
+        localStorage.setItem('log_id', log.id);
+      }
+
+      // ✅ redirect to dashboard
       setShowToast(true);
       navigation.push('/EmergTrack/app', 'forward', 'replace');
 
