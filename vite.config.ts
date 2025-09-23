@@ -11,7 +11,7 @@ export default defineConfig({
     legacy()
   ],
 
-  base:"/EmergTrack",
+  base:"/EmergTrack/",
   test: {
     globals: true,
     environment: 'jsdom',
