@@ -3,9 +3,9 @@
   "private": true,
   "version": "0.0.1",
   "type": "module",
-  "homepage": "https://Niwresh.Github.io/EmergTrack/",
+  "homepage": "https://niwresh.github.io/EmergTrack/",
   "scripts": {
-    "predeploy": "npm run build",
+    "predeploy": "npm run build && cp dist/index.html dist/404.html ",
     "deploy": "gh-pages -d dist",
     "dev": "vite",
     "build": "tsc && vite build",
