@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   IonButton,
   IonContent,
@@ -109,97 +109,18 @@ const Login: React.FC = () => {
     }
   };
 
-  // ✅ Handle OAuth (Google / Facebook)
-  useEffect(() => {
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
-          const user = session.user;
-          const email = user.email!;
-          const fullName =
-            user.user_metadata?.full_name ||
-            user.user_metadata?.name ||
-            email.split('@')[0];
-          const provider = user.app_metadata?.provider || 'oauth';
-
-          console.log('🔐 OAuth login detected for:', email);
-
-          try {
-            const { data: existingParent } = await supabase
-              .from('parents')
-              .select('*')
-              .eq('email', email)
-              .maybeSingle();
-
-            let parentId;
-
-            if (!existingParent) {
-              console.log('🆕 No parent found, inserting new OAuth user...');
-              const { data: newParent, error: insertError } = await supabase
-                .from('parents')
-                .insert([
-                  {
-                    full_name: fullName,
-                    username: email.split('@')[0],
-                    email: email,
-                    password: '', // no password for OAuth
-                    auth_provider: provider,
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                  },
-                ])
-                .select('*')
-                .single();
-
-              if (insertError) {
-                console.error('❌ Error inserting parent:', insertError);
-                return;
-              }
-              parentId = newParent.parent_id;
-            } else {
-              console.log('✅ Parent already exists:', existingParent.parent_id);
-              parentId = existingParent.parent_id;
-            }
-
-            // Insert into logs
-            const { data: log, error: logError } = await supabase
-              .from('logs')
-              .insert([
-                {
-                  parent_id: parentId,
-                  full_name: fullName,
-                  email: email,
-                },
-              ])
-              .select('id')
-              .single();
-
-            if (!logError && log) {
-              console.log('✅ OAuth log created with ID:', log.id);
-              localStorage.setItem('log_id', log.id);
-            }
-
-            navigation.push('/EmergTrack/app');
-          } catch (err) {
-            console.error('❌ OAuth post-login error:', err);
-          }
-        }
-      }
-    );
-
-    return () => {
-      listener.subscription.unsubscribe();
-    };
-  }, [navigation]);
+  // ✅ Redirect URLs for Supabase OAuth
+  const redirectTo =
+    process.env.NODE_ENV === 'development'
+      ? 'http://localhost:8100/EmergTrack/oauth-callback'
+      : 'https://niwresh.github.io/EmergTrack/oauth-callback';
 
   // ✅ Google OAuth
   const doGoogleLogin = async () => {
     console.log('🔵 Google login clicked');
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        redirectTo: window.location.origin,
-      },
+      options: { redirectTo },
     });
     if (error) {
       setAlertMessage(error.message);
@@ -212,9 +133,7 @@ const Login: React.FC = () => {
     console.log('🔵 Facebook login clicked');
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'facebook',
-      options: {
-        redirectTo: window.location.origin,
-      },
+      options: { redirectTo },
     });
     if (error) {
       setAlertMessage(error.message);
@@ -298,6 +217,7 @@ const Login: React.FC = () => {
             <IonIcon slot="start" icon={logoGoogle} />
             Continue with Google
           </IonButton>
+
           <IonButton
             expand="block"
             className="facebook-btn"

@@ -1,6 +1,7 @@
-import { Redirect, Route } from 'react-router-dom';
+import { Route } from 'react-router-dom';
 import { IonApp, IonRouterOutlet, setupIonicReact } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
+
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -34,6 +35,7 @@ import './theme/variables.css';
 import Login from './pages/Login';
 import Menu from './pages/Menu';
 import Register from './pages/Register';
+import OAuthCallback from './pages/OAuthCallback';
 
 setupIonicReact();
 
@@ -42,6 +44,7 @@ const App: React.FC = () => (
     <IonReactRouter>
       <IonRouterOutlet>
       <Route exact path="/EmergTrack" component={Login} />
+      <Route path="/EmergTrack/oauth-callback" component={OAuthCallback} />
       <Route  path="/EmergTrack/app" component={Menu} />
       <Route  path="/EmergTrack/register" component={Register} />
       </IonRouterOutlet>
