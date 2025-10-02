@@ -7,8 +7,7 @@ import {
   IonMenu, 
   IonMenuToggle, 
   IonPage, 
-  IonRouterOutlet, 
-  IonSplitPane, 
+  IonRouterOutlet,  
   IonTitle, 
   IonToolbar 
 } from '@ionic/react'
@@ -20,6 +19,7 @@ import Home from './Home';
 import About from './About';
 import Feedback from './Feedback';
 import Settings from './AccountSettings';
+import Student from './RegisterStudent';
 import Maps from './Maps';
 
 const Menu: React.FC = () => {
@@ -29,6 +29,7 @@ const Menu: React.FC = () => {
     { name:'Home', url: '/EmergTrack/app/home', icon: homeOutline },
     { name:'About', url: '/EmergTrack/app/about', icon: rocketOutline },
     { name:'Setings', url: '/EmergTrack/app/accountsettings', icon: settingsOutline },
+    { name:'Student', url: '/EmergTrack/app/registerstudent', icon: settingsOutline },
     { name:'Feedback', url: '/EmergTrack/app/feedback', icon: settingsOutline },
     { name:'Maps', url: '/EmergTrack/app/maps', icon: locateOutline },
   ];
@@ -62,22 +63,21 @@ const Menu: React.FC = () => {
 
   return (
     <IonPage>
-      <IonSplitPane contentId="main">
-        <IonMenu contentId="main">
-          <IonHeader>
-            <IonToolbar>
-              <IonTitle>Menu</IonTitle>
-            </IonToolbar>
-          </IonHeader>
-          <IonContent>
-            {path.map((item,index) => (
-              <IonMenuToggle key={index}>
-                <IonItem routerLink={item.url} routerDirection="forward">
-                  <IonIcon icon={item.icon} slot="start"></IonIcon>
-                  {item.name}
-                </IonItem>
-              </IonMenuToggle>
-            ))}
+      <IonMenu contentId="main" side="start">
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>Menu</IonTitle>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent>
+          {path.map((item, index) => (
+            <IonMenuToggle key={index} autoHide={true}>
+              <IonItem routerLink={item.url} routerDirection="forward">
+                <IonIcon icon={item.icon} slot="start" />
+                {item.name}
+              </IonItem>
+            </IonMenuToggle>
+          ))}
 
             {/* Logout Button */}
             <IonButton expand="full" onClick={handleLogout}>
@@ -91,6 +91,7 @@ const Menu: React.FC = () => {
           <Route exact path="/EmergTrack/app/home" component={Home} />
           <Route exact path="/EmergTrack/app/about" component={About} />
           <Route exact path="/EmergTrack/app/accountsettings" component={Settings} />
+          <Route exact path="/EmergTrack/app/registerstudent" component={Student} />
           <Route exact path="/EmergTrack/app/feedback" component={Feedback} />
           <Route exact path="/EmergTrack/app/maps" component={Maps} />
 
@@ -98,7 +99,6 @@ const Menu: React.FC = () => {
             <Redirect to="/EmergTrack/app/home" />
           </Route>
         </IonRouterOutlet>
-      </IonSplitPane>
     </IonPage>
   );
 };
