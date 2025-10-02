@@ -17,6 +17,7 @@ import {
 } from "@ionic/react";
 import { useHistory } from "react-router-dom";
 import { supabase } from "../utils/supabaseClients";
+import { User } from "@supabase/supabase-js";
 
 // Leaflet imports
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
@@ -32,20 +33,9 @@ const defaultIcon = new L.Icon({
 });
 L.Marker.prototype.options.icon = defaultIcon;
 
-interface Parent {
-  parent_id: number;
-  full_name: string;
-  username: string;
-  email: string;
-  auth_user_id: string; // uuid
-  created_at: string;
-  updated_at: string;
-  user_avatar_url?: string;
-}
-
 const DashboardContainer: React.FC = () => {
   const history = useHistory();
-  const [parent, setParent] = useState<Parent | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [studentCount, setStudentCount] = useState<number>(0);
   const [alerts, setAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,41 +44,25 @@ const DashboardContainer: React.FC = () => {
     const fetchDashboardData = async () => {
       setLoading(true);
 
-      // ✅ Step 1: Get logged-in auth user (supabase.auth still handles session)
       const { data: authData } = await supabase.auth.getUser();
-      const authUser = authData?.user;
+      if (authData?.user) {
+        setUser(authData.user);
 
-      if (authUser) {
-        // ✅ Step 2: Get parent row from `parents` table
-        const { data: parentData, error: parentError } = await supabase
-          .from("parents")
-          .select("*")
-          .eq("auth_user_id", authUser.id) // match auth_user_id with Supabase Auth id
-          .single();
-
-        if (parentError) {
-          console.error("Error fetching parent:", parentError);
-          setLoading(false);
-          return;
-        }
-
-        setParent(parentData);
-
-        // ✅ Step 3: Count students linked to this parent
+        // ✅ Get total students registered by this parent
         const { count, error: studentError } = await supabase
           .from("students")
           .select("*", { count: "exact", head: true })
-          .eq("parent_id", parentData.parent_id);
+          .eq("parent_id", authData.user.id);
 
         if (!studentError && count !== null) {
           setStudentCount(count);
         }
 
-        // ✅ Step 4: Fetch recent alerts
+        // ✅ Fetch latest 3 alerts
         const { data: alertsData } = await supabase
           .from("alerts")
           .select("*")
-          .eq("parent_id", parentData.parent_id)
+          .eq("parent_id", authData.user.id)
           .order("created_at", { ascending: false })
           .limit(3);
 
@@ -106,7 +80,7 @@ const DashboardContainer: React.FC = () => {
   const lat = latestAlert?.latitude;
   const lng = latestAlert?.longitude;
 
-  // ✅ Redirect with lat/lng
+  // ✅ Function to redirect with lat/lng
   const goToMap = () => {
     if (lat && lng) {
       history.push(`/EmergTrack/app/home/maps?lat=${lat}&lng=${lng}`);
