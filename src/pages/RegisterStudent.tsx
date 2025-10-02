@@ -23,34 +23,20 @@ import {
   IonSelectOption,
   IonMenuButton
 } from '@ionic/react';
-import type { SelectChangeEventDetail, InputChangeEventDetail } from '@ionic/core';
 import { add, create, trash } from 'ionicons/icons';
 import { useEffect, useState } from 'react';
 import { supabase } from '../utils/supabaseClients';
-
-// Student interface matching your table
-interface Student {
-  id: number;
-  student_name: string;
-  student_id: string;
-  nodemcu_serial: string;
-  device_type: string | null;
-  parent_address: string;
-  parent_phone: string;
-  parent_id: string;
-  created_at?: string;
-}
 
 const RegisterStudent: React.FC = () => {
   const [studentName, setStudentName] = useState('');
   const [studentId, setStudentId] = useState('');
   const [serial, setSerial] = useState('');
-  const [deviceType, setDeviceType] = useState(''); 
+  const [deviceType, setDeviceType] = useState(''); // 🔑 new field
   const [parentAddress, setParentAddress] = useState('');
   const [parentPhone, setParentPhone] = useState('');
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
-  const [students, setStudents] = useState<Student[]>([]);
+  const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -58,35 +44,19 @@ const RegisterStudent: React.FC = () => {
   // Fetch registered students
   const fetchStudents = async () => {
     setLoading(true);
-    try {
-      const { data: authData } = await supabase.auth.getUser();
-      const user = authData?.user;
-      if (!user) {
-        setStudents([]);
-        setLoading(false);
-        return;
-      }
-
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
       const { data, error } = await supabase
-        .from('students') // <-- removed generic here
+        .from('students')
         .select('*')
         .eq('parent_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('fetch students error', error);
-        setToastMessage('Error fetching students: ' + error.message);
-        setShowToast(true);
-      } else if (data) {
-        setStudents(data as Student[]);
+      if (!error && data) {
+        setStudents(data);
       }
-    } catch (err) {
-      console.error('unexpected fetch error', err);
-      setToastMessage('Unexpected error fetching students.');
-      setShowToast(true);
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -111,16 +81,15 @@ const RegisterStudent: React.FC = () => {
       return;
     }
 
-    const { data: authData } = await supabase.auth.getUser();
-    const user = authData?.user;
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       setToastMessage("You must be logged in as a parent.");
       setShowToast(true);
       return;
     }
 
-    if (editingId !== null) {
-      // Check if serial belongs to another student (exclude current editingId)
+    if (editingId) {
+      // 🔑 Check if serial belongs to another student
       const { data: existing, error: checkError } = await supabase
         .from('students')
         .select('id')
@@ -133,19 +102,20 @@ const RegisterStudent: React.FC = () => {
         return;
       }
 
-      if (Array.isArray(existing) && existing.length > 0) {
+      if (existing && existing.length > 0) {
         setToastMessage("This NodeMCU serial is already registered to another student.");
         setShowToast(true);
         return;
       }
 
+      // ✅ Update existing student
       const { error: updateError } = await supabase
         .from('students')
         .update({
           student_name: studentName,
           student_id: studentId,
           nodemcu_serial: serial,
-          device_type: deviceType,
+          device_type: deviceType, // 🔑 new field
           parent_address: parentAddress,
           parent_phone: parentPhone
         })
@@ -159,62 +129,60 @@ const RegisterStudent: React.FC = () => {
         resetForm();
         fetchStudents();
       }
-      setShowToast(true);
-      return;
-    }
-
-    // Insert new student (check duplicate serial)
-    const { data: existing, error: insertCheckError } = await supabase
-      .from('students')
-      .select('id')
-      .eq('nodemcu_serial', serial);
-
-    if (insertCheckError) {
-      setToastMessage("Error checking serial: " + insertCheckError.message);
-      setShowToast(true);
-      return;
-    }
-
-    if (Array.isArray(existing) && existing.length > 0) {
-      setToastMessage("This NodeMCU serial is already registered.");
-      setShowToast(true);
-      return;
-    }
-
-    const { error: insertError } = await supabase.from('students').insert([{
-      parent_id: user.id,
-      student_name: studentName,
-      student_id: studentId,
-      nodemcu_serial: serial,
-      device_type: deviceType,
-      parent_address: parentAddress,
-      parent_phone: parentPhone
-    }]);
-
-    if (insertError) {
-      setToastMessage("Error registering: " + insertError.message);
     } else {
-      setToastMessage("Student registered successfully!");
-      resetForm();
-      fetchStudents();
+      // Insert new student (check duplicate serial)
+      const { data: existing, error: insertCheckError } = await supabase
+        .from('students')
+        .select('id')
+        .eq('nodemcu_serial', serial);
+
+      if (insertCheckError) {
+        setToastMessage("Error checking serial: " + insertCheckError.message);
+        setShowToast(true);
+        return;
+      }
+
+      if (existing && existing.length > 0) {
+        setToastMessage("This NodeMCU serial is already registered.");
+        setShowToast(true);
+        return;
+      }
+
+      const { error: insertError } = await supabase.from('students').insert([{
+        parent_id: user.id,
+        student_name: studentName,
+        student_id: studentId,
+        nodemcu_serial: serial,
+        device_type: deviceType, // 🔑 new field
+        parent_address: parentAddress,
+        parent_phone: parentPhone
+      }]);
+
+      if (insertError) {
+        setToastMessage("Error registering: " + insertError.message);
+      } else {
+        setToastMessage("Student registered successfully!");
+        resetForm();
+        fetchStudents();
+      }
     }
+
     setShowToast(true);
   };
 
-  const handleEdit = (s: Student) => {
+  const handleEdit = (s: any) => {
     setEditingId(s.id);
     setStudentName(s.student_name);
     setStudentId(s.student_id);
     setSerial(s.nodemcu_serial);
-    setDeviceType(s.device_type || '');
+    setDeviceType(s.device_type || ''); // 🔑 load existing
     setParentAddress(s.parent_address);
     setParentPhone(s.parent_phone);
     setShowForm(true);
   };
 
   const handleDelete = async (id: number) => {
-    const { data: authData } = await supabase.auth.getUser();
-    const user = authData?.user;
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       setToastMessage("You must be logged in as a parent.");
       setShowToast(true);
@@ -241,7 +209,7 @@ const RegisterStudent: React.FC = () => {
       <IonHeader>
         <IonToolbar>
           <IonButtons slot='start'>
-            <IonMenuButton />
+             <IonMenuButton></IonMenuButton>
           </IonButtons>
           <IonTitle>Students</IonTitle>
         </IonToolbar>
@@ -290,21 +258,21 @@ const RegisterStudent: React.FC = () => {
               <IonLabel position="stacked">Student Name</IonLabel>
               <IonInput 
                 value={studentName} 
-                onIonChange={(e: CustomEvent<InputChangeEventDetail>) => setStudentName(e.detail.value ?? '')} />
+                onIonChange={e => setStudentName(e.detail.value!)} />
             </IonItem>
 
             <IonItem>
               <IonLabel position="stacked">Student ID</IonLabel>
               <IonInput 
                 value={studentId} 
-                onIonChange={(e: CustomEvent<InputChangeEventDetail>) => setStudentId(e.detail.value ?? '')} />
+                onIonChange={e => setStudentId(e.detail.value!)} />
             </IonItem>
 
             <IonItem>
               <IonLabel position="stacked">NodeMCU Serial Number</IonLabel>
               <IonInput 
                 value={serial} 
-                onIonChange={(e: CustomEvent<InputChangeEventDetail>) => setSerial(e.detail.value ?? '')} />
+                onIonChange={e => setSerial(e.detail.value!)} />
             </IonItem>
 
             <IonItem>
@@ -312,7 +280,7 @@ const RegisterStudent: React.FC = () => {
               <IonSelect
                 value={deviceType}
                 placeholder="Select Device"
-                onIonChange={(e: CustomEvent<SelectChangeEventDetail>) => setDeviceType(String(e.detail.value ?? ''))}
+                onIonChange={e => setDeviceType(e.detail.value)}
               >
                 <IonSelectOption value="ESP8266">ESP8266</IonSelectOption>
                 <IonSelectOption value="ESP32">ESP32</IonSelectOption>
@@ -324,18 +292,18 @@ const RegisterStudent: React.FC = () => {
               <IonLabel position="stacked">Parent Address</IonLabel>
               <IonInput 
                 value={parentAddress} 
-                onIonChange={(e: CustomEvent<InputChangeEventDetail>) => setParentAddress(e.detail.value ?? '')} />
+                onIonChange={e => setParentAddress(e.detail.value!)} />
             </IonItem>
 
             <IonItem>
               <IonLabel position="stacked">Parent Phone Number</IonLabel>
               <IonInput 
                 value={parentPhone} 
-                onIonChange={(e: CustomEvent<InputChangeEventDetail>) => setParentPhone(e.detail.value ?? '')} />
+                onIonChange={e => setParentPhone(e.detail.value!)} />
             </IonItem>
 
             <IonButton expand="block" onClick={handleSave}>
-              {editingId !== null ? 'Update Student' : 'Register Student'}
+              {editingId ? 'Update Student' : 'Register Student'}
             </IonButton>
             <IonButton expand="block" fill="clear" onClick={resetForm}>
               Cancel
