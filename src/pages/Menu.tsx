@@ -11,7 +11,7 @@ import {
   IonTitle, 
   IonToolbar 
 } from '@ionic/react'
-import { homeOutline, locateOutline, logOutOutline, rocketOutline, settingsOutline } from 'ionicons/icons';
+import { chatboxEllipsesOutline, homeOutline, locateOutline, logOutOutline, rocketOutline, schoolOutline, settingsOutline } from 'ionicons/icons';
 import { Redirect, Route } from 'react-router';
 import { useIonRouter } from '@ionic/react';
 import { supabase } from '../utils/supabaseClients';
@@ -28,9 +28,9 @@ const Menu: React.FC = () => {
   const path = [
     { name:'Home', url: '/EmergTrack/app/home', icon: homeOutline },
     { name:'About', url: '/EmergTrack/app/about', icon: rocketOutline },
-    { name:'Setings', url: '/EmergTrack/app/accountsettings', icon: settingsOutline },
-    { name:'Student', url: '/EmergTrack/app/registerstudent', icon: settingsOutline },
-    { name:'Feedback', url: '/EmergTrack/app/feedback', icon: settingsOutline },
+    { name:'Settings', url: '/EmergTrack/app/accountsettings', icon: settingsOutline },
+    { name:'Student', url: '/EmergTrack/app/registerstudent', icon: schoolOutline },
+    { name:'Feedback', url: '/EmergTrack/app/feedback', icon: chatboxEllipsesOutline },
     { name:'Maps', url: '/EmergTrack/app/maps', icon: locateOutline },
   ];
 
