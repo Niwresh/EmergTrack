@@ -17,7 +17,7 @@ import {
 } from "@ionic/react";
 import { useHistory } from "react-router-dom";
 import { supabase } from "../utils/supabaseClients";
-import { User } from "@supabase/supabase-js";
+import { type User } from "@supabase/supabase-js"; // ✅ fixed import
 
 // Leaflet imports
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
@@ -33,11 +33,20 @@ const defaultIcon = new L.Icon({
 });
 L.Marker.prototype.options.icon = defaultIcon;
 
+// ✅ Define a type for alerts
+type Alert = {
+  id: string;
+  alert_message: string;
+  created_at: string;
+  latitude?: number;
+  longitude?: number;
+};
+
 const DashboardContainer: React.FC = () => {
   const history = useHistory();
-  const [user, setUser] = useState<User | null>(null);
+  const [, setUser] = useState<User | null>(null); // ✅ fixed typing
   const [studentCount, setStudentCount] = useState<number>(0);
-  const [alerts, setAlerts] = useState<any[]>([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]); // ✅ fixed typing
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -66,7 +75,7 @@ const DashboardContainer: React.FC = () => {
           .order("created_at", { ascending: false })
           .limit(3);
 
-        if (alertsData) setAlerts(alertsData);
+        if (alertsData) setAlerts(alertsData as Alert[]);
       }
 
       setLoading(false);
@@ -115,7 +124,7 @@ const DashboardContainer: React.FC = () => {
                 </IonCard>
               </IonCol>
 
-              {/* Total Devices Card (same count as students) */}
+              {/* Total Devices Card */}
               <IonCol size="12" sizeMd="6">
                 <IonCard>
                   <IonCardHeader>
