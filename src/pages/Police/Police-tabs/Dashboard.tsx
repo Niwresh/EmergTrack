@@ -21,7 +21,7 @@ import {
 import { useHistory } from "react-router-dom";
 import { supabase } from "../../../utils/supabaseClients";
 
-// Leaflet imports
+// ✅ Leaflet imports
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -35,46 +35,48 @@ const defaultIcon = new L.Icon({
 });
 L.Marker.prototype.options.icon = defaultIcon;
 
-// ✅ Define TypeScript interface for alerts
-interface Alert {
+// ✅ Define TypeScript interface for forwarded alerts
+interface ForwardedAlert {
   id: number;
-  alert_message: string;
+  alert_id: number;
+  student_id: string;
+  message: string;
   latitude: number;
   longitude: number;
-  status: string;
-  created_at: string;
+  forwarded_at: string;
+  parent_name?: string;
+  parent_phone?: string;
+  student_name?: string;
+  is_read?: boolean;
 }
 
 const Dashboard: React.FC = () => {
   const history = useHistory();
-  const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [activeCount, setActiveCount] = useState<number>(0);
-  const [resolvedCount, setResolvedCount] = useState<number>(0);
+  const [alerts, setAlerts] = useState<ForwardedAlert[]>([]);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [readCount, setReadCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       setLoading(true);
 
-      // ✅ Get active alerts
-      const { data: activeAlerts, error: activeError } = await supabase
-        .from("alerts")
+      // ✅ Fetch all forwarded alerts
+      const { data, error } = await supabase
+        .from("forwarded_alerts")
         .select("*")
-        .eq("status", "active");
+        .order("forwarded_at", { ascending: false });
 
-      if (!activeError && activeAlerts) {
-        setAlerts(activeAlerts.slice(0, 3)); // Show latest 3
-        setActiveCount(activeAlerts.length);
+      if (error) {
+        console.error("Error fetching forwarded alerts:", error);
+        setLoading(false);
+        return;
       }
 
-      // ✅ Get resolved alerts count
-      const { count: resolved, error: resolvedError } = await supabase
-        .from("alerts")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "resolved");
-
-      if (!resolvedError && resolved !== null) {
-        setResolvedCount(resolved);
+      if (data) {
+        setAlerts(data.slice(0, 3)); // Show the latest 3 alerts
+        setUnreadCount(data.filter((a) => !a.is_read).length);
+        setReadCount(data.filter((a) => a.is_read).length);
       }
 
       setLoading(false);
@@ -83,12 +85,12 @@ const Dashboard: React.FC = () => {
     fetchDashboardData();
   }, []);
 
-  // ✅ Latest alert coordinates
+  // ✅ Latest alert coordinates for the map preview
   const latestAlert = alerts.length > 0 ? alerts[0] : null;
   const lat = latestAlert?.latitude;
   const lng = latestAlert?.longitude;
 
-  // ✅ Go to map page
+  // ✅ Navigate to the full map page
   const goToMap = () => {
     history.push("/EmergTrack/app/police/home/maps");
   };
@@ -97,7 +99,6 @@ const Dashboard: React.FC = () => {
     <IonPage id="policeContent">
       <IonHeader>
         <IonToolbar>
-          {/* ✅ Add menu button to show PoliceMenu */}
           <IonButtons slot="start">
             <IonMenuButton />
           </IonButtons>
@@ -107,37 +108,40 @@ const Dashboard: React.FC = () => {
 
       <IonContent className="ion-padding">
         {loading ? (
-          <IonSpinner />
+          <div style={{ textAlign: "center", marginTop: "20%" }}>
+            <IonSpinner />
+            <p>Loading dashboard data...</p>
+          </div>
         ) : (
           <IonGrid>
             <IonRow>
-              {/* Active Alerts Count */}
+              {/* Unread (New) Alerts Count */}
               <IonCol size="12" sizeMd="6">
-                <IonCard>
+                <IonCard color="danger">
                   <IonCardHeader>
-                    <IonCardTitle>Active Alerts</IonCardTitle>
+                    <IonCardTitle>New / Unread Alerts</IonCardTitle>
                   </IonCardHeader>
                   <IonCardContent>
-                    <h1>{activeCount}</h1>
+                    <h1>{unreadCount}</h1>
                   </IonCardContent>
                 </IonCard>
               </IonCol>
 
-              {/* Resolved Alerts Count */}
+              {/* Read Alerts Count */}
               <IonCol size="12" sizeMd="6">
-                <IonCard>
+                <IonCard color="success">
                   <IonCardHeader>
-                    <IonCardTitle>Resolved Alerts</IonCardTitle>
+                    <IonCardTitle>Read Alerts</IonCardTitle>
                   </IonCardHeader>
                   <IonCardContent>
-                    <h1>{resolvedCount}</h1>
+                    <h1>{readCount}</h1>
                   </IonCardContent>
                 </IonCard>
               </IonCol>
             </IonRow>
 
             <IonRow>
-              {/* Latest Alert Location (Map Preview) */}
+              {/* Latest Alert Map Preview */}
               <IonCol size="12" sizeMd="6">
                 <IonCard onClick={goToMap} button>
                   <IonCardHeader>
@@ -154,7 +158,7 @@ const Dashboard: React.FC = () => {
                         <Marker position={[lat, lng]}>
                           <Popup>
                             🚨 Latest Alert <br />
-                            {new Date(latestAlert.created_at).toLocaleString()}
+                            {new Date(latestAlert.forwarded_at).toLocaleString()}
                           </Popup>
                         </Marker>
                       </MapContainer>
@@ -179,20 +183,27 @@ const Dashboard: React.FC = () => {
               <IonCol size="12" sizeMd="6">
                 <IonCard>
                   <IonCardHeader>
-                    <IonCardTitle>Recent Alerts</IonCardTitle>
+                    <IonCardTitle>Recent Forwarded Alerts</IonCardTitle>
                   </IonCardHeader>
                   <IonCardContent>
                     {alerts.length === 0 ? (
-                      <IonText>No active alerts</IonText>
+                      <IonText>No forwarded alerts yet</IonText>
                     ) : (
                       alerts.map((a) => (
-                        <p key={a.id}>
-                          🚨 {a.alert_message} <br />
-                          📍 {a.latitude}, {a.longitude} <br />
-                          <small>
-                            {new Date(a.created_at).toLocaleString()}
-                          </small>
-                        </p>
+                        <div key={a.id} style={{ marginBottom: "10px" }}>
+                          <p>
+                            🚨 {a.message || "Emergency alert triggered!"}
+                            <br />
+                            👨‍🎓 <strong>{a.student_name || a.student_id}</strong>
+                            <br />
+                            📍 {a.latitude}, {a.longitude}
+                            <br />
+                            <small>
+                              {new Date(a.forwarded_at).toLocaleString()}
+                            </small>
+                          </p>
+                          <hr />
+                        </div>
                       ))
                     )}
                     <IonButton expand="block" onClick={goToMap}>
