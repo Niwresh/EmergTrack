@@ -8,9 +8,9 @@ import {
 } from '@ionic/react';
 import { bookOutline, notificationsOutline, search } from 'ionicons/icons';
 import { Route, Redirect } from 'react-router-dom';
-import Dashboard from './Police-tabs/Dashboard';
-import Alerts from './Police-tabs/Alerts';
-import Maps from './Police-tabs/Maps';
+import Dashboard from '../Police/Police-tabs/Dashboard';
+import Alerts from '../Police/Police-tabs/Alerts';
+import Maps from '../Police/Police-tabs/Maps';
 
 const PoliceHome: React.FC = () => {
   const tabs = [
