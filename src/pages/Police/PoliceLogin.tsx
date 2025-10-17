@@ -78,8 +78,8 @@ const PoliceLogin: React.FC = () => {
         return;
       }
 
-      // ✅ Optional: Sign in with Supabase Auth (keeps session sync)
-      await supabase.auth.signInWithPassword({ email, password });
+    //   // ✅ Optional: Sign in with Supabase Auth (keeps session sync)
+    //   await supabase.auth.signInWithPassword({ email, password });
 
       // ✅ Success
       setShowToast(true);
