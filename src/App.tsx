@@ -36,6 +36,9 @@ import Login from './pages/Login';
 import Menu from './pages/Menu';
 import Register from './pages/Register';
 import OAuthCallback from './pages/OAuthCallback';
+import PoliceLogin from './pages/Police/PoliceLogin';
+import PoliceRegister from './pages/Police/PoliceRegister';
+import PoliceMenu from './pages/Police/PoliceMenu';
 
 setupIonicReact();
 
@@ -43,10 +46,16 @@ const App: React.FC = () => (
   <IonApp>
     <IonReactRouter>
       <IonRouterOutlet>
+        {/* Parents Side */}
       <Route exact path="/EmergTrack" component={Login} />
       <Route path="/EmergTrack/oauth-callback" component={OAuthCallback} />
       <Route  path="/EmergTrack/app" component={Menu} />
       <Route  path="/EmergTrack/register" component={Register} />
+
+      {/* Police Side */}
+       <Route exact path="/EmergTrack/police" component={PoliceLogin} />
+        <Route  path="/EmergTrack/police/register" component={PoliceRegister} />
+        <Route path="/EmergTrack/app/police" component={PoliceMenu} />
       </IonRouterOutlet>
     </IonReactRouter>
   </IonApp>
