@@ -104,7 +104,7 @@ const PoliceLogin: React.FC = () => {
               <div className="login-avatar">
                 <IonAvatar>
                   <img
-                    src="https://scontent.fmnl8-1.fna.fbcdn.net/v/t1.15752-9/538959922_3879256525543014_5947897526488506572_n.jpg?stp=dst-jpg_s480x480_tt6&_nc_cat=108&ccb=1-7&_nc_sid=0024fc&_nc_eui2=AeGynUFrqy6HMQnXmqCjSCJeTvm_N8x3AqRO-b83zHcCpP-Ip8SXSsJd_SNQge144UGsWT4DWWHzQ59QQ_PNn0IN&_nc_ohc=_BsqKAdM-HgQ7kNvwF5roE0&_nc_oc=AdlbzXiWJFIN3Qg-ilWVaMBUqWcwmplN8kk58vjh-N0dj_2R9WP30a5NWmXdXxrXwzQ&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fmnl8-1.fna&oh=03_Q7cD3QEtNZL8U5k8DGW05emwfTrjy25v-PyWWGB_NU7ZIwwv8A&oe=68EAC368"
+                    src="https://ph.pinterest.com/pin/25755029113989852/"
                     alt="Avatar"
                   />
                 </IonAvatar>
