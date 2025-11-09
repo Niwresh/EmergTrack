@@ -39,6 +39,7 @@ import OAuthCallback from './pages/OAuthCallback';
 import PoliceLogin from './pages/Police/PoliceLogin';
 import PoliceRegister from './pages/Police/PoliceRegister';
 import PoliceMenu from './pages/Police/PoliceMenu';
+import AdminLogin from './pages/Admin/AdminLogin';
 
 setupIonicReact();
 
@@ -56,6 +57,10 @@ const App: React.FC = () => (
        <Route exact path="/EmergTrack/police" component={PoliceLogin} />
         <Route  path="/EmergTrack/police/register" component={PoliceRegister} />
         <Route path="/EmergTrack/app/police" component={PoliceMenu} />
+
+         {/* Admin Side */}
+         <Route exact path="/EmergTrack/admin" component={AdminLogin} />
+
       </IonRouterOutlet>
     </IonReactRouter>
   </IonApp>
