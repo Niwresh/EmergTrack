@@ -27,7 +27,7 @@ import AdminHome from './AdminHome';
 // import AdminLiveMap from './AdminMaps';
 // import AdminAlertHistory from './AdminAlerts';
 import AdminReports from './AdminReports';
-// import AdminDevices from './AdminDevices';
+import AdminDevices from './AdminDevices';
 
 const AdminMenu: React.FC = () => {
   // Navigation links for admin side
@@ -91,7 +91,7 @@ const AdminMenu: React.FC = () => {
           {/* <Route exact path="/EmergTrack/app/admin/livemap" component={AdminLiveMap} />
           <Route exact path="/EmergTrack/app/admin/alerthistory" component={AdminAlertHistory} /> */}
           <Route exact path="/EmergTrack/app/admin/reports" component={AdminReports} />
-          {/* <Route exact path="/EmergTrack/app/admin/devices" component={AdminDevices} /> */}
+          <Route exact path="/EmergTrack/app/admin/devices" component={AdminDevices} />
 
           {/* ✅ Default redirect when hitting /admin */}
           <Route exact path="/EmergTrack/app/admin">
