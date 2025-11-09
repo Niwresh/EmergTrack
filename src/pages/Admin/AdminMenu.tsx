@@ -15,7 +15,6 @@ import {
 import {
   homeOutline,
   mapOutline,
-  alertCircleOutline,
   barChartOutline,
   hardwareChipOutline,
   logOutOutline,
@@ -24,8 +23,7 @@ import { Route, Redirect } from 'react-router-dom';
 
 // Import your admin pages
 import AdminHome from './AdminHome';
-// import AdminLiveMap from './AdminMaps';
-// import AdminAlertHistory from './AdminAlerts';
+import AdminMaps from './AdminMaps';
 import AdminReports from './AdminReports';
 import AdminDevices from './AdminDevices';
 
@@ -34,7 +32,6 @@ const AdminMenu: React.FC = () => {
   const path = [
     { name: 'Home', url: '/EmergTrack/app/admin/home', icon: homeOutline },
     { name: 'Live Maps', url: '/EmergTrack/app/admin/maps', icon: mapOutline },
-    { name: 'Alert History', url: '/EmergTrack/app/admin/alerthistory', icon: alertCircleOutline },
     { name: 'Reports', url: '/EmergTrack/app/admin/reports', icon: barChartOutline },
     { name: 'Devices', url: '/EmergTrack/app/admin/devices', icon: hardwareChipOutline },
   ];
@@ -88,8 +85,7 @@ const AdminMenu: React.FC = () => {
 
         <IonRouterOutlet>
           <Route exact path="/EmergTrack/app/admin/home" component={AdminHome} />
-          {/* <Route exact path="/EmergTrack/app/admin/livemap" component={AdminLiveMap} />
-          <Route exact path="/EmergTrack/app/admin/alerthistory" component={AdminAlertHistory} /> */}
+          <Route exact path="/EmergTrack/app/admin/maps" component={AdminMaps} />
           <Route exact path="/EmergTrack/app/admin/reports" component={AdminReports} />
           <Route exact path="/EmergTrack/app/admin/devices" component={AdminDevices} />
 
