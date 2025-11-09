@@ -67,7 +67,7 @@ const AdminLogin: React.FC = () => {
 
       // Redirect after short delay
       setTimeout(() => {
-        navigation.push('/EmergTrack/app/admin/dashboard', 'forward', 'replace');
+        navigation.push('/EmergTrack/app/admin/home', 'forward', 'replace');
       }, 1200);
     } else {
       setAlertMessage('Invalid admin credentials.');
