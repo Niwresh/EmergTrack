@@ -52,17 +52,17 @@ const App: React.FC = () => (
         {/* Parents Side */}
       <Route exact path="/EmergTrack" component={Login} />
       <Route path="/EmergTrack/oauth-callback" component={OAuthCallback} />
-      <Route  path="/EmergTrack/" component={Menu} />
+      <Route  path="/EmergTrack/app" component={Menu} />
       <Route  path="/EmergTrack/register" component={Register} />
 
       {/* Police Side */}
        <Route exact path="/EmergTrack/police" component={PoliceLogin} />
         <Route  path="/EmergTrack/police/register" component={PoliceRegister} />
-        <Route path="/EmergTrack/police" component={PoliceMenu} />
+        <Route path="/EmergTrack/app/police" component={PoliceMenu} />
 
          {/* Admin Side */}
          <Route exact path="/EmergTrack/admin" component={AdminLogin} />
-         <Route path="/EmergTrack/admin" component={AdminMenu} />
+         <Route path="/EmergTrack/app/admin" component={AdminMenu} />
 
 
         <Route  path="/EmergTrack/policealert" component={PoliceAlert} />
