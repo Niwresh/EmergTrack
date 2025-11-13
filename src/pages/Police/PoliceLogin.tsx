@@ -84,7 +84,7 @@ const PoliceLogin: React.FC = () => {
       // ✅ Success
       setShowToast(true);
       setTimeout(() => {
-        navigation.push('/EmergTrack/app/police/home/dashboard', 'forward', 'replace');
+        navigation.push('/EmergTrack/app/police/home', 'forward', 'replace');
       }, 1200);
     } catch (err) {
       setAlertMessage(err instanceof Error ? err.message : 'An unexpected error occurred.');
