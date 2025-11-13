@@ -14,7 +14,7 @@ import {
   useIonRouter,
 } from '@ionic/react';
 import { useState } from 'react';
-import { supabase } from '../../utils/supabaseClients';
+import { supabase } from '../utils/supabaseClients';
 import bcrypt from 'bcryptjs';
 import '../../Assets/Login.css';
 
