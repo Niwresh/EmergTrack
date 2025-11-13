@@ -29,9 +29,9 @@ import { supabase } from '../utils/supabaseClients';
 
 const RegisterStudent: React.FC = () => {
   const [studentName, setStudentName] = useState('');
-  const [studentId, setStudentId] = useState('');
+  const [schoolId, setSchoolId] = useState(''); // renamed
   const [serial, setSerial] = useState('');
-  const [deviceType, setDeviceType] = useState(''); // 🔑 new field
+  const [deviceType, setDeviceType] = useState('');
   const [parentAddress, setParentAddress] = useState('');
   const [parentPhone, setParentPhone] = useState('');
   const [toastMessage, setToastMessage] = useState('');
@@ -39,7 +39,7 @@ const RegisterStudent: React.FC = () => {
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null); // UUID
 
   // Fetch registered students
   const fetchStudents = async () => {
@@ -52,9 +52,7 @@ const RegisterStudent: React.FC = () => {
         .eq('parent_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (!error && data) {
-        setStudents(data);
-      }
+      if (!error && data) setStudents(data);
     }
     setLoading(false);
   };
@@ -65,7 +63,7 @@ const RegisterStudent: React.FC = () => {
 
   const resetForm = () => {
     setStudentName('');
-    setStudentId('');
+    setSchoolId('');
     setSerial('');
     setDeviceType('');
     setParentAddress('');
@@ -75,7 +73,7 @@ const RegisterStudent: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (!studentName || !studentId || !serial || !deviceType || !parentAddress || !parentPhone) {
+    if (!studentName || !schoolId || !serial || !deviceType || !parentAddress || !parentPhone) {
       setToastMessage("All fields are required");
       setShowToast(true);
       return;
@@ -89,12 +87,12 @@ const RegisterStudent: React.FC = () => {
     }
 
     if (editingId) {
-      // 🔑 Check if serial belongs to another student
+      // Check if serial belongs to another student
       const { data: existing, error: checkError } = await supabase
         .from('students')
-        .select('id')
+        .select('student_id')
         .eq('nodemcu_serial', serial)
-        .neq('id', editingId);
+        .neq('student_id', editingId);
 
       if (checkError) {
         setToastMessage("Error checking serial: " + checkError.message);
@@ -108,18 +106,18 @@ const RegisterStudent: React.FC = () => {
         return;
       }
 
-      // ✅ Update existing student
+      // Update existing student
       const { error: updateError } = await supabase
         .from('students')
         .update({
           student_name: studentName,
-          student_id: studentId,
+          school_id: schoolId,
           nodemcu_serial: serial,
-          device_type: deviceType, // 🔑 new field
+          device_type: deviceType,
           parent_address: parentAddress,
           parent_phone: parentPhone
         })
-        .eq('id', editingId)
+        .eq('student_id', editingId)
         .eq('parent_id', user.id);
 
       if (updateError) {
@@ -130,10 +128,10 @@ const RegisterStudent: React.FC = () => {
         fetchStudents();
       }
     } else {
-      // Insert new student (check duplicate serial)
+      // Insert new student
       const { data: existing, error: insertCheckError } = await supabase
         .from('students')
-        .select('id')
+        .select('student_id')
         .eq('nodemcu_serial', serial);
 
       if (insertCheckError) {
@@ -151,9 +149,9 @@ const RegisterStudent: React.FC = () => {
       const { error: insertError } = await supabase.from('students').insert([{
         parent_id: user.id,
         student_name: studentName,
-        student_id: studentId,
+        school_id: schoolId,
         nodemcu_serial: serial,
-        device_type: deviceType, // 🔑 new field
+        device_type: deviceType,
         parent_address: parentAddress,
         parent_phone: parentPhone
       }]);
@@ -171,17 +169,17 @@ const RegisterStudent: React.FC = () => {
   };
 
   const handleEdit = (s: any) => {
-    setEditingId(s.id);
+    setEditingId(s.student_id); // UUID
     setStudentName(s.student_name);
-    setStudentId(s.student_id);
+    setSchoolId(s.school_id);
     setSerial(s.nodemcu_serial);
-    setDeviceType(s.device_type || ''); // 🔑 load existing
+    setDeviceType(s.device_type || '');
     setParentAddress(s.parent_address);
     setParentPhone(s.parent_phone);
     setShowForm(true);
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       setToastMessage("You must be logged in as a parent.");
@@ -192,7 +190,7 @@ const RegisterStudent: React.FC = () => {
     const { error } = await supabase
       .from('students')
       .delete()
-      .eq('id', id)
+      .eq('student_id', id)
       .eq('parent_id', user.id);
 
     if (error) {
@@ -209,14 +207,13 @@ const RegisterStudent: React.FC = () => {
       <IonHeader>
         <IonToolbar>
           <IonButtons slot='start'>
-             <IonMenuButton></IonMenuButton>
+             <IonMenuButton />
           </IonButtons>
           <IonTitle>Students</IonTitle>
         </IonToolbar>
       </IonHeader>
 
       <IonContent fullscreen>
-        {/* List of registered students */}
         {loading ? (
           <IonSpinner className="ion-padding" />
         ) : students.length === 0 ? (
@@ -224,25 +221,22 @@ const RegisterStudent: React.FC = () => {
         ) : (
           <IonList>
             {students.map((s) => (
-              <IonCard key={s.id}>
+              <IonCard key={s.student_id}>
                 <IonCardHeader>
                   <IonCardTitle>{s.student_name}</IonCardTitle>
                 </IonCardHeader>
                 <IonCardContent>
-                  <p><strong>ID:</strong> {s.student_id}</p>
+                  <p><strong>School ID:</strong> {s.school_id}</p>
                   <p><strong>NodeMCU Serial:</strong> {s.nodemcu_serial}</p>
                   <p><strong>Device Type:</strong> {s.device_type || '-'}</p>
                   <p><strong>Address:</strong> {s.parent_address}</p>
                   <p><strong>Phone:</strong> {s.parent_phone}</p>
-
                   <IonButtons>
                     <IonButton onClick={() => handleEdit(s)}>
-                      <IonIcon icon={create} slot="start" />
-                      Edit
+                      <IonIcon icon={create} slot="start" /> Edit
                     </IonButton>
-                    <IonButton color="danger" onClick={() => handleDelete(s.id)}>
-                      <IonIcon icon={trash} slot="start" />
-                      Delete
+                    <IonButton color="danger" onClick={() => handleDelete(s.student_id)}>
+                      <IonIcon icon={trash} slot="start" /> Delete
                     </IonButton>
                   </IonButtons>
                 </IonCardContent>
@@ -251,37 +245,26 @@ const RegisterStudent: React.FC = () => {
           </IonList>
         )}
 
-        {/* Registration / Update Form */}
         {showForm && (
           <IonList className="ion-padding">
             <IonItem>
               <IonLabel position="stacked">Student Name</IonLabel>
-              <IonInput 
-                value={studentName} 
-                onIonChange={e => setStudentName(e.detail.value!)} />
+              <IonInput value={studentName} onIonChange={e => setStudentName(e.detail.value!)} />
             </IonItem>
 
             <IonItem>
-              <IonLabel position="stacked">Student ID</IonLabel>
-              <IonInput 
-                value={studentId} 
-                onIonChange={e => setStudentId(e.detail.value!)} />
+              <IonLabel position="stacked">School ID</IonLabel>
+              <IonInput value={schoolId} onIonChange={e => setSchoolId(e.detail.value!)} />
             </IonItem>
 
             <IonItem>
               <IonLabel position="stacked">NodeMCU Serial Number</IonLabel>
-              <IonInput 
-                value={serial} 
-                onIonChange={e => setSerial(e.detail.value!)} />
+              <IonInput value={serial} onIonChange={e => setSerial(e.detail.value!)} />
             </IonItem>
 
             <IonItem>
               <IonLabel position="stacked">Device Type</IonLabel>
-              <IonSelect
-                value={deviceType}
-                placeholder="Select Device"
-                onIonChange={e => setDeviceType(e.detail.value)}
-              >
+              <IonSelect value={deviceType} placeholder="Select Device" onIonChange={e => setDeviceType(e.detail.value)}>
                 <IonSelectOption value="ESP8266">ESP8266</IonSelectOption>
                 <IonSelectOption value="ESP32">ESP32</IonSelectOption>
                 <IonSelectOption value="Arduino Uno">Arduino Uno</IonSelectOption>
@@ -290,28 +273,21 @@ const RegisterStudent: React.FC = () => {
 
             <IonItem>
               <IonLabel position="stacked">Parent Address</IonLabel>
-              <IonInput 
-                value={parentAddress} 
-                onIonChange={e => setParentAddress(e.detail.value!)} />
+              <IonInput value={parentAddress} onIonChange={e => setParentAddress(e.detail.value!)} />
             </IonItem>
 
             <IonItem>
               <IonLabel position="stacked">Parent Phone Number</IonLabel>
-              <IonInput 
-                value={parentPhone} 
-                onIonChange={e => setParentPhone(e.detail.value!)} />
+              <IonInput value={parentPhone} onIonChange={e => setParentPhone(e.detail.value!)} />
             </IonItem>
 
             <IonButton expand="block" onClick={handleSave}>
               {editingId ? 'Update Student' : 'Register Student'}
             </IonButton>
-            <IonButton expand="block" fill="clear" onClick={resetForm}>
-              Cancel
-            </IonButton>
+            <IonButton expand="block" fill="clear" onClick={resetForm}>Cancel</IonButton>
           </IonList>
         )}
 
-        {/* Floating Action Button */}
         {!showForm && (
           <IonFab vertical="bottom" horizontal="end" slot="fixed">
             <IonFabButton onClick={() => setShowForm(true)}>
@@ -320,13 +296,7 @@ const RegisterStudent: React.FC = () => {
           </IonFab>
         )}
 
-        {/* Toast messages */}
-        <IonToast
-          isOpen={showToast}
-          onDidDismiss={() => setShowToast(false)}
-          message={toastMessage}
-          duration={2000}
-        />
+        <IonToast isOpen={showToast} onDidDismiss={() => setShowToast(false)} message={toastMessage} duration={2000} />
       </IonContent>
     </IonPage>
   );

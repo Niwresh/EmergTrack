@@ -41,6 +41,7 @@ import PoliceRegister from './pages/Police/PoliceRegister';
 import PoliceMenu from './pages/Police/PoliceMenu';
 import AdminLogin from './pages/Admin/AdminLogin';
 import AdminMenu from './pages/Admin/AdminMenu';
+import PoliceAlert from './pages/PoliceAlert';
 
 setupIonicReact();
 
@@ -63,6 +64,8 @@ const App: React.FC = () => (
          <Route exact path="/EmergTrack/admin" component={AdminLogin} />
          <Route path="/EmergTrack/app/admin" component={AdminMenu} />
 
+
+        <Route  path="/EmergTrack/policealert" component={PoliceAlert} />
 
       </IonRouterOutlet>
     </IonReactRouter>
