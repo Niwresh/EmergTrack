@@ -12,7 +12,13 @@ import {
   IonRow,
   IonCol,
   IonSpinner,
+  IonCard,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardContent,
+  IonIcon,
 } from "@ionic/react";
+import { chevronDown, chevronForward, print, download } from "ionicons/icons";
 import { supabase } from "../../utils/supabaseClients";
 
 // ----------------------
@@ -61,7 +67,6 @@ const AdminReports: React.FC = () => {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Toggle state for collapsible tables
   const [showParents, setShowParents] = useState(true);
   const [showStudents, setShowStudents] = useState(true);
   const [showPolice, setShowPolice] = useState(true);
@@ -73,7 +78,6 @@ const AdminReports: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-
       try {
         const { data: parentsData } = await supabase.from("parents").select("*");
         if (parentsData) setParents(parentsData as Parent[]);
@@ -89,10 +93,8 @@ const AdminReports: React.FC = () => {
       } catch (error) {
         console.error("Error fetching reports data:", error);
       }
-
       setLoading(false);
     };
-
     fetchData();
   }, []);
 
@@ -101,16 +103,14 @@ const AdminReports: React.FC = () => {
   // ----------------------
   const exportCSV = <T extends object>(data: T[], filename: string) => {
     if (!data || !data.length) return;
-
     const headers = Object.keys(data[0]);
     const csvRows = [
-      headers.join(","), // header row
+      headers.join(","),
       ...data.map(row =>
-        headers.map(field => JSON.stringify((row as never)[field] ?? "")).join(",")
+        headers.map(field => JSON.stringify((row as any)[field] ?? "")).join(",")
       ),
     ];
     const csvString = csvRows.join("\n");
-
     const blob = new Blob([csvString], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -121,7 +121,7 @@ const AdminReports: React.FC = () => {
   };
 
   // ----------------------
-  // Print a table
+  // Print Table
   // ----------------------
   const printTable = (tableId: string) => {
     const table = document.getElementById(tableId);
@@ -145,13 +145,114 @@ const AdminReports: React.FC = () => {
             <IonTitle>Admin Reports</IonTitle>
           </IonToolbar>
         </IonHeader>
-        <IonContent className="ion-padding">
-          <IonSpinner />
-          <p>Loading data...</p>
+        <IonContent className="ion-padding" style={{ textAlign: "center" }}>
+          <IonSpinner name="crescent" />
+          <p>Loading reports...</p>
         </IonContent>
       </IonPage>
     );
   }
+
+  // ----------------------
+  // Card Table Component
+  // ----------------------
+  const ReportCard = <T extends object>({
+    title,
+    data,
+    show,
+    setShow,
+    tableId,
+  }: {
+    title: string;
+    data: T[];
+    show: boolean;
+    setShow: (show: boolean) => void;
+    tableId: string;
+  }) => (
+    <IonCard style={{ marginBottom: "20px" }}>
+      <IonCardHeader
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          backgroundColor: "#f0f4f8",
+          cursor: "pointer",
+        }}
+        onClick={() => setShow(!show)}
+      >
+        <IonCardTitle>
+          <IonIcon icon={show ? chevronDown : chevronForward} /> {title}
+        </IonCardTitle>
+        <div>
+          <IonButton
+            fill="outline"
+            size="small"
+            onClick={e => {
+              e.stopPropagation();
+              exportCSV(data, title.toLowerCase().replace(" ", "_"));
+            }}
+          >
+            <IonIcon slot="start" icon={download} />
+            CSV
+          </IonButton>
+          <IonButton
+            fill="outline"
+            size="small"
+            onClick={e => {
+              e.stopPropagation();
+              printTable(tableId);
+            }}
+          >
+            <IonIcon slot="start" icon={print} />
+            Print
+          </IonButton>
+        </div>
+      </IonCardHeader>
+      {show && (
+        <IonCardContent>
+          <div style={{ overflowX: "auto" }}>
+            <table
+              id={tableId}
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+              }}
+            >
+              <thead style={{ backgroundColor: "#e2e8f0" }}>
+                <tr>
+                  {Object.keys(data[0]).map(key => (
+                    <th
+                      key={key}
+                      style={{
+                        border: "1px solid #cbd5e1",
+                        padding: "8px",
+                        textAlign: "left",
+                      }}
+                    >
+                      {key.replace(/_/g, " ").toUpperCase()}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {data.map((row: any, idx) => (
+                  <tr key={idx} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                    {Object.keys(row).map((field, i) => (
+                      <td key={i} style={{ padding: "8px" }}>
+                        {row[field] instanceof Date
+                          ? new Date(row[field]).toLocaleString()
+                          : row[field] ?? "-"}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </IonCardContent>
+      )}
+    </IonCard>
+  );
 
   return (
     <IonPage>
@@ -163,170 +264,38 @@ const AdminReports: React.FC = () => {
           <IonTitle>Admin Reports</IonTitle>
         </IonToolbar>
       </IonHeader>
-
       <IonContent className="ion-padding">
         <IonGrid>
-          {/* Parents Table */}
           <IonRow>
             <IonCol>
-              <h2>
-                <button onClick={() => setShowParents(!showParents)}>
-                  {showParents ? "▼" : "▶"} Parents
-                </button>
-              </h2>
-              {showParents && (
-                <>
-                  <IonButton onClick={() => exportCSV(parents, "parents")}>Export CSV</IonButton>
-                  <IonButton onClick={() => printTable("parentsTable")}>Print</IonButton>
-                  <table id="parentsTable" border={1} style={{ width: "100%", marginTop: "10px" }}>
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>Full Name</th>
-                        <th>Username</th>
-                        <th>Email</th>
-                        <th>Created At</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {parents.map(p => (
-                        <tr key={p.id}>
-                          <td>{p.id}</td>
-                          <td>{p.full_name}</td>
-                          <td>{p.username}</td>
-                          <td>{p.email}</td>
-                          <td>{new Date(p.created_at).toLocaleString()}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </>
-              )}
-            </IonCol>
-          </IonRow>
-
-          {/* Students Table */}
-          <IonRow>
-            <IonCol>
-              <h2>
-                <button onClick={() => setShowStudents(!showStudents)}>
-                  {showStudents ? "▼" : "▶"} Students
-                </button>
-              </h2>
-              {showStudents && (
-                <>
-                  <IonButton onClick={() => exportCSV(students, "students")}>Export CSV</IonButton>
-                  <IonButton onClick={() => printTable("studentsTable")}>Print</IonButton>
-                  <table id="studentsTable" border={1} style={{ width: "100%", marginTop: "10px" }}>
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>Parent ID</th>
-                        <th>Student Name</th>
-                        <th>Student ID</th>
-                        <th>Created At</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {students.map(s => (
-                        <tr key={s.id}>
-                          <td>{s.id}</td>
-                          <td>{s.parent_id}</td>
-                          <td>{s.student_name}</td>
-                          <td>{s.student_id}</td>
-                          <td>{new Date(s.created_at).toLocaleString()}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </>
-              )}
-            </IonCol>
-          </IonRow>
-
-          {/* Police Table */}
-          <IonRow>
-            <IonCol>
-              <h2>
-                <button onClick={() => setShowPolice(!showPolice)}>
-                  {showPolice ? "▼" : "▶"} Police
-                </button>
-              </h2>
-              {showPolice && (
-                <>
-                  <IonButton onClick={() => exportCSV(police, "police")}>Export CSV</IonButton>
-                  <IonButton onClick={() => printTable("policeTable")}>Print</IonButton>
-                  <table id="policeTable" border={1} style={{ width: "100%", marginTop: "10px" }}>
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>Username</th>
-                        <th>First Name</th>
-                        <th>Last Name</th>
-                        <th>Email</th>
-                        <th>Created At</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {police.map(p => (
-                        <tr key={p.police_id}>
-                          <td>{p.police_id}</td>
-                          <td>{p.police_username}</td>
-                          <td>{p.police_firstname}</td>
-                          <td>{p.police_lastname}</td>
-                          <td>{p.police_email}</td>
-                          <td>{new Date(p.created_at).toLocaleString()}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </>
-              )}
-            </IonCol>
-          </IonRow>
-
-          {/* Alerts Table */}
-          <IonRow>
-            <IonCol>
-              <h2>
-                <button onClick={() => setShowAlerts(!showAlerts)}>
-                  {showAlerts ? "▼" : "▶"} Emergency Alerts
-                </button>
-              </h2>
-              {showAlerts && (
-                <>
-                  <IonButton onClick={() => exportCSV(alerts, "alerts")}>Export CSV</IonButton>
-                  <IonButton onClick={() => printTable("alertsTable")}>Print</IonButton>
-                  <table id="alertsTable" border={1} style={{ width: "100%", marginTop: "10px" }}>
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>Parent ID</th>
-                        <th>Student ID</th>
-                        <th>Message</th>
-                        <th>Latitude</th>
-                        <th>Longitude</th>
-                        <th>Created At</th>
-                        <th>Forwarded At</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {alerts.map(a => (
-                        <tr key={a.id}>
-                          <td>{a.id}</td>
-                          <td>{a.parent_id}</td>
-                          <td>{a.student_id}</td>
-                          <td>{a.message}</td>
-                          <td>{a.latitude ?? "-"}</td>
-                          <td>{a.longitude ?? "-"}</td>
-                          <td>{new Date(a.created_at).toLocaleString()}</td>
-                          <td>{a.forwarded_at ? new Date(a.forwarded_at).toLocaleString() : "-"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </>
-              )}
+              <ReportCard
+                title="Parents"
+                data={parents}
+                show={showParents}
+                setShow={setShowParents}
+                tableId="parentsTable"
+              />
+              <ReportCard
+                title="Students"
+                data={students}
+                show={showStudents}
+                setShow={setShowStudents}
+                tableId="studentsTable"
+              />
+              <ReportCard
+                title="Police"
+                data={police}
+                show={showPolice}
+                setShow={setShowPolice}
+                tableId="policeTable"
+              />
+              <ReportCard
+                title="Emergency Alerts"
+                data={alerts}
+                show={showAlerts}
+                setShow={setShowAlerts}
+                tableId="alertsTable"
+              />
             </IonCol>
           </IonRow>
         </IonGrid>
