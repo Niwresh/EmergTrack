@@ -19,7 +19,7 @@ import {
   IonMenuButton,
 } from "@ionic/react";
 import { useHistory } from "react-router-dom";
-import { supabase } from "../../../utils/supabaseClients";
+import { supabase } from "../../utils/supabaseClients";
 
 // ✅ Leaflet imports
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";

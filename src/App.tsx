@@ -59,6 +59,8 @@ const App: React.FC = () => (
        <Route exact path="/EmergTrack/police" component={PoliceLogin} />
         <Route  path="/EmergTrack/police/register" component={PoliceRegister} />
         <Route path="/EmergTrack/app/police" component={PoliceMenu} />
+         
+
 
          {/* Admin Side */}
          <Route exact path="/EmergTrack/admin" component={AdminLogin} />

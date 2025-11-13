@@ -8,7 +8,7 @@ import {
 } from '@ionic/react';
 import { bookOutline, notificationsOutline, search } from 'ionicons/icons';
 import { Route, Redirect } from 'react-router-dom';
-import Dashboard from './Police-tabs/Dashboard';
+import Dashboard from './Dashboard';
 import Alerts from './Police-tabs/Alerts';
 import Maps from './Police-tabs/Maps';
 
@@ -22,7 +22,7 @@ const PoliceHome: React.FC = () => {
   return (
     <IonTabs>
       <IonRouterOutlet>
-        <Route exact path="/EmergTrack/app/police/home/dashboard" component={Dashboard} />
+        <Route exact path="/EmergTrack/app/police/dashboard" component={Dashboard} />
         <Route exact path="/EmergTrack/app/police/home/maps" component={Maps} />
         <Route exact path="/EmergTrack/app/police/home/alerts" component={Alerts} />
 
