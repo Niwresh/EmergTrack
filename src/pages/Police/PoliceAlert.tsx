@@ -20,8 +20,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../utils/supabaseClients";
 
 interface PoliceAlert {
-  emergency_id: string; // bigint
+  emergency_id: string;
   student_id: string;
+  student_name?: string; // add student_name field
   latitude: number;
   longitude: number;
   created_at: string;
@@ -38,20 +39,34 @@ const PoliceAlert: React.FC = () => {
   const fetchPoliceAlerts = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // Step 1: Fetch all emergency alerts with status=true
+      const { data: alertsData, error: alertsError } = await supabase
         .from("emergency_alerts")
         .select("*")
         .eq("status", true)
         .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Error fetching police alerts:", error);
-        setAlerts([]);
-      } else {
-        setAlerts(data as PoliceAlert[]);
-      }
+      if (alertsError) throw alertsError;
+
+      // Step 2: Fetch all students (we'll match by student_id)
+      const { data: studentsData, error: studentsError } = await supabase
+        .from("students")
+        .select("student_id, student_name");
+
+      if (studentsError) throw studentsError;
+
+      // Step 3: Combine alerts with student names
+      const combinedData = alertsData.map((alert) => {
+        const student = studentsData.find((s) => s.student_id === alert.student_id);
+        return {
+          ...alert,
+          student_name: student ? student.student_name : "Unknown",
+        };
+      });
+
+      setAlerts(combinedData as PoliceAlert[]);
     } catch (err) {
-      console.error("Unexpected error:", err);
+      console.error("Error fetching data:", err);
       setAlerts([]);
     } finally {
       setLoading(false);
@@ -113,11 +128,11 @@ const PoliceAlert: React.FC = () => {
     }
   };
 
-  // Filter alerts based on the selected option
+  // Apply filter
   const filteredAlerts = alerts.filter((a) => {
     if (filter === "received") return a.received === true;
     if (filter === "pending") return !a.received;
-    return true; // "all"
+    return true;
   });
 
   return (
@@ -175,6 +190,7 @@ const PoliceAlert: React.FC = () => {
                 >
                   <IonCol>Emergency ID</IonCol>
                   <IonCol>Student ID</IonCol>
+                  <IonCol>Student Name</IonCol>
                   <IonCol>Latitude</IonCol>
                   <IonCol>Longitude</IonCol>
                   <IonCol>Date</IonCol>
@@ -189,7 +205,8 @@ const PoliceAlert: React.FC = () => {
                     style={{ borderBottom: "1px solid #ddd" }}
                   >
                     <IonCol>{policeAlert.emergency_id}</IonCol>
-                    <IonCol>{policeAlert.student_id}</IonCol>
+                    
+                    <IonCol>{policeAlert.student_name}</IonCol>
                     <IonCol>{policeAlert.latitude}</IonCol>
                     <IonCol>{policeAlert.longitude}</IonCol>
                     <IonCol>{new Date(policeAlert.created_at).toLocaleString()}</IonCol>

@@ -8,19 +8,16 @@ import {
 } from "@ionic/react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import { useIonViewDidEnter } from "@ionic/react";
-import { useLocation } from "react-router-dom";
 import { supabase } from "../../utils/supabaseClients";
 import { LatLngExpression } from "leaflet";
 
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
-// Import marker images from leaflet
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
-// ✅ Fix for Leaflet marker icons (strict TypeScript-safe)
 interface LeafletIconDefaultPrototype {
   _getIconUrl?: () => string;
 }
@@ -33,14 +30,12 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
-// ✅ Component to fix map rendering in Ionic views
+// Map resizer to fix rendering inside Ionic
 const MapResizer: React.FC = () => {
   const map = useMap();
 
   useIonViewDidEnter(() => {
-    setTimeout(() => {
-      map.invalidateSize();
-    }, 200);
+    setTimeout(() => map.invalidateSize(), 200);
   });
 
   useEffect(() => {
@@ -50,46 +45,63 @@ const MapResizer: React.FC = () => {
   return null;
 };
 
+interface EmergencyAlert {
+  emergency_id: string;
+  latitude: number;
+  longitude: number;
+}
+
 const PoliceMaps: React.FC = () => {
-  const location = useLocation();
-  const [coords, setCoords] = useState<LatLngExpression>([14.5995, 120.9842]); // Default Manila
+  const [alerts, setAlerts] = useState<EmergencyAlert[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
-    const params = new URLSearchParams(location.search);
-    const latParam = parseFloat(params.get("lat") || "0");
-    const lngParam = parseFloat(params.get("lng") || "0");
 
-    // ✅ Use query params if provided
-    if (latParam && lngParam) {
-      if (mounted) setCoords([latParam, lngParam]);
-      return;
-    }
-
-    // ✅ Otherwise, fetch latest alert and subscribe to realtime updates
-    const fetchLatestAlert = async () => {
+    // Fetch all received alerts
+    const fetchReceivedAlerts = async () => {
+      setLoading(true);
       const { data, error } = await supabase
         .from("emergency_alerts")
-        .select("latitude, longitude")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
+        .select("emergency_id, latitude, longitude")
+        .eq("received", true)
+        .order("created_at", { ascending: false });
 
       if (!error && data && mounted) {
-        setCoords([data.latitude, data.longitude]);
+        setAlerts(data);
+      } else if (error) {
+        console.error("Error fetching received alerts:", error);
       }
+      setLoading(false);
     };
 
-    fetchLatestAlert();
+    fetchReceivedAlerts();
 
+    // Subscribe to updates: when received becomes true
     const channel = supabase
-      .channel("realtime-alerts")
+      .channel("received-alerts")
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "emergency_alerts" },
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "emergency_alerts",
+          filter: "received=eq.true",
+        },
         (payload) => {
-          const newAlert = payload.new as { latitude: number; longitude: number };
-          if (mounted && newAlert) setCoords([newAlert.latitude, newAlert.longitude]);
+          const updated = payload.new as EmergencyAlert;
+          if (mounted) {
+            setAlerts((prev) => {
+              // avoid duplicates
+              const exists = prev.find((a) => a.emergency_id === updated.emergency_id);
+              if (exists) {
+                return prev.map((a) =>
+                  a.emergency_id === updated.emergency_id ? updated : a
+                );
+              }
+              return [updated, ...prev];
+            });
+          }
         }
       )
       .subscribe();
@@ -98,30 +110,43 @@ const PoliceMaps: React.FC = () => {
       mounted = false;
       supabase.removeChannel(channel);
     };
-  }, [location.search]);
+  }, []);
+
+  // Set initial center as the first alert, or default
+  const center: LatLngExpression = alerts.length
+    ? [alerts[0].latitude, alerts[0].longitude]
+    : [14.5995, 120.9842]; // Manila default
 
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>Maps</IonTitle>
+          <IonTitle>Police Map - Received Alerts</IonTitle>
         </IonToolbar>
       </IonHeader>
 
       <IonContent fullscreen className="ion-no-padding">
         <div style={{ height: "100vh", width: "100%" }}>
-          <MapContainer center={coords} zoom={15} style={{ height: "100%", width: "100%" }}>
+          <MapContainer center={center} zoom={15} style={{ height: "100%", width: "100%" }}>
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
             />
-            <Marker position={coords}>
-              <Popup>
-                🚨 <strong>Emergency Alert</strong> <br />
-                Lat: {(coords as [number, number])[0].toFixed(5)} <br />
-                Lng: {(coords as [number, number])[1].toFixed(5)}
-              </Popup>
-            </Marker>
+
+            {/* Render all received alerts as markers */}
+            {alerts.map((alert) => (
+              <Marker
+                key={alert.emergency_id}
+                position={[alert.latitude, alert.longitude]}
+              >
+                <Popup>
+                  🚨 <strong>Received Emergency Alert</strong> <br />
+                  Lat: {alert.latitude.toFixed(5)} <br />
+                  Lng: {alert.longitude.toFixed(5)}
+                </Popup>
+              </Marker>
+            ))}
+
             <MapResizer />
           </MapContainer>
         </div>

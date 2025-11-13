@@ -10,12 +10,12 @@ import { bookOutline, notificationsOutline, search } from 'ionicons/icons';
 import { Route, Redirect } from 'react-router-dom';
 import Dashboard from './Dashboard';
 import PoliceAlert from './PoliceAlert';
-import Maps from './PoliceMaps';
+import PoliceMaps from './PoliceMaps';
 
 const PoliceHome: React.FC = () => {
   const tabs = [
     { name: 'Dashboard', tab: 'dashboard', url: '/EmergTrack/app/police/home/dashboard', icon: bookOutline },
-    { name: 'Maps', tab: 'maps', url: '/EmergTrack/app/police/home/maps', icon: search },
+    { name: 'Maps', tab: 'maps', url: '/EmergTrack/app/police/home/policemaps', icon: search },
     { name: 'Alerts', tab: 'alerts', url: '/EmergTrack/app/police/home/policealert', icon: notificationsOutline },
   ];
 
@@ -23,7 +23,7 @@ const PoliceHome: React.FC = () => {
     <IonTabs>
       <IonRouterOutlet>
         <Route exact path="/EmergTrack/app/police/home/dashboard" component={Dashboard} />
-        <Route exact path="/EmergTrack/app/police/home/maps" component={Maps} />
+        <Route exact path="/EmergTrack/app/police/home/policemaps" component={PoliceMaps} />
         <Route exact path="/EmergTrack/app/police/home/policealert" component={PoliceAlert} />
 
         {/* Default tab redirect */}
