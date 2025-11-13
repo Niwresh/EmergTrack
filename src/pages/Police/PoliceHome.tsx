@@ -8,23 +8,23 @@ import {
 } from '@ionic/react';
 import { bookOutline, notificationsOutline, search } from 'ionicons/icons';
 import { Route, Redirect } from 'react-router-dom';
-import Dashboard from './Police-tabs/Dashboard';
-import Alerts from './Police-tabs/Alerts';
-import Maps from './Police-tabs/Maps';
+import Dashboard from './Dashboard';
+import PoliceAlert from './PoliceAlert';
+import Maps from './PoliceMaps';
 
 const PoliceHome: React.FC = () => {
   const tabs = [
     { name: 'Dashboard', tab: 'dashboard', url: '/EmergTrack/app/police/home/dashboard', icon: bookOutline },
     { name: 'Maps', tab: 'maps', url: '/EmergTrack/app/police/home/maps', icon: search },
-    { name: 'Alerts', tab: 'alerts', url: '/EmergTrack/app/police/home/alerts', icon: notificationsOutline },
+    { name: 'Alerts', tab: 'alerts', url: '/EmergTrack/app/police/home/policealert', icon: notificationsOutline },
   ];
 
   return (
     <IonTabs>
       <IonRouterOutlet>
-        <Route exact path="/EmergTrack/app/police/dashboard" component={Dashboard} />
+        <Route exact path="/EmergTrack/app/police/home/dashboard" component={Dashboard} />
         <Route exact path="/EmergTrack/app/police/home/maps" component={Maps} />
-        <Route exact path="/EmergTrack/app/police/home/alerts" component={Alerts} />
+        <Route exact path="/EmergTrack/app/police/home/policealert" component={PoliceAlert} />
 
         {/* Default tab redirect */}
         <Route exact path="/EmergTrack/app/police/home">

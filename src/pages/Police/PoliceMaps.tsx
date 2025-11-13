@@ -9,7 +9,7 @@ import {
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import { useIonViewDidEnter } from "@ionic/react";
 import { useLocation } from "react-router-dom";
-import { supabase } from "../../../utils/supabaseClients";
+import { supabase } from "../../utils/supabaseClients";
 import { LatLngExpression } from "leaflet";
 
 import "leaflet/dist/leaflet.css";
@@ -50,7 +50,7 @@ const MapResizer: React.FC = () => {
   return null;
 };
 
-const Maps: React.FC = () => {
+const PoliceMaps: React.FC = () => {
   const location = useLocation();
   const [coords, setCoords] = useState<LatLngExpression>([14.5995, 120.9842]); // Default Manila
 
@@ -130,4 +130,4 @@ const Maps: React.FC = () => {
   );
 };
 
-export default Maps;
+export default PoliceMaps;

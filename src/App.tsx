@@ -42,7 +42,8 @@ import Dashboard from './pages/Police/Dashboard';
 import PoliceMenu from './pages/Police/PoliceMenu';
 import AdminLogin from './pages/Admin/AdminLogin';
 import AdminMenu from './pages/Admin/AdminMenu';
-import PoliceAlert from './pages/PoliceAlert';
+import PoliceAlert from './pages/Police/PoliceAlert';
+
 
 
 setupIonicReact();
@@ -61,7 +62,9 @@ const App: React.FC = () => (
        <Route exact path="/EmergTrack/police" component={PoliceLogin} />
         <Route  path="/EmergTrack/police/register" component={PoliceRegister} />
         <Route path="/EmergTrack/app/police" component={PoliceMenu} />
-        <Route path="/EmergTrack/police/dashboard" component={Dashboard} />
+         <Route path="/EmergTrack/police/dashboard" component={Dashboard} />
+        
+        
          
 
 

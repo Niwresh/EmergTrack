@@ -17,6 +17,8 @@ import {
   IonButton,
   IonButtons,
   IonMenuButton,
+  IonSelect,
+  IonSelectOption,
 } from "@ionic/react";
 import { useHistory } from "react-router-dom";
 import { supabase } from "../../utils/supabaseClients";
@@ -35,7 +37,7 @@ const defaultIcon = new L.Icon({
 });
 L.Marker.prototype.options.icon = defaultIcon;
 
-// ✅ Define TypeScript interface for forwarded alerts
+// ✅ Interfaces
 interface ForwardedAlert {
   id: number;
   alert_id: number;
@@ -50,18 +52,35 @@ interface ForwardedAlert {
   is_read?: boolean;
 }
 
+interface PoliceAlert {
+  emergency_id: string;
+  student_id: string;
+  latitude: number;
+  longitude: number;
+  created_at: string;
+  parent_id: string;
+  status: boolean;
+  received?: boolean;
+}
+
 const Dashboard: React.FC = () => {
   const history = useHistory();
+
+  // ✅ Dashboard States
   const [alerts, setAlerts] = useState<ForwardedAlert[]>([]);
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [readCount, setReadCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
+  // ✅ Police Alerts Table States
+  const [policeAlerts, setPoliceAlerts] = useState<PoliceAlert[]>([]);
+  const [tableLoading, setTableLoading] = useState(true);
+  const [filter, setFilter] = useState<"all" | "received" | "pending">("all");
+
+  // ✅ Fetch dashboard stats and forwarded alerts
   useEffect(() => {
     const fetchDashboardData = async () => {
       setLoading(true);
-
-      // ✅ Fetch all forwarded alerts
       const { data, error } = await supabase
         .from("forwarded_alerts")
         .select("*")
@@ -74,7 +93,7 @@ const Dashboard: React.FC = () => {
       }
 
       if (data) {
-        setAlerts(data.slice(0, 3)); // Show the latest 3 alerts
+        setAlerts(data.slice(0, 3));
         setUnreadCount(data.filter((a) => !a.is_read).length);
         setReadCount(data.filter((a) => a.is_read).length);
       }
@@ -85,12 +104,102 @@ const Dashboard: React.FC = () => {
     fetchDashboardData();
   }, []);
 
-  // ✅ Latest alert coordinates for the map preview
+  // ✅ Fetch emergency alerts for table
+  const fetchPoliceAlerts = async () => {
+    setTableLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("emergency_alerts")
+        .select("*")
+        .eq("status", true)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching police alerts:", error);
+        setPoliceAlerts([]);
+      } else {
+        setPoliceAlerts(data as PoliceAlert[]);
+      }
+    } catch (err) {
+      console.error("Unexpected error:", err);
+      setPoliceAlerts([]);
+    } finally {
+      setTableLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPoliceAlerts();
+
+    const channel = supabase
+      .channel("police-alerts-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "emergency_alerts",
+          filter: "status=eq.true",
+        },
+        (payload) => {
+          const newAlert = payload.new as PoliceAlert;
+          setPoliceAlerts((prev) => {
+            const index = prev.findIndex(
+              (a) => a.emergency_id === newAlert.emergency_id
+            );
+            if (index !== -1) {
+              const updated = [...prev];
+              updated[index] = newAlert;
+              return updated;
+            }
+            return [newAlert, ...prev];
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // ✅ Mark as Received
+  const handleReceived = async (policeAlert: PoliceAlert) => {
+    try {
+      const { error } = await supabase
+        .from("emergency_alerts")
+        .update({ received: true })
+        .eq("emergency_id", policeAlert.emergency_id);
+
+      if (error) {
+        console.error("Error updating received:", error);
+      } else {
+        alert("Marked as received");
+        setPoliceAlerts((prev) =>
+          prev.map((a) =>
+            a.emergency_id === policeAlert.emergency_id
+              ? { ...a, received: true }
+              : a
+          )
+        );
+      }
+    } catch (err) {
+      console.error("Unexpected error:", err);
+    }
+  };
+
+  // ✅ Filter for alerts table
+  const filteredAlerts = policeAlerts.filter((a) => {
+    if (filter === "received") return a.received === true;
+    if (filter === "pending") return !a.received;
+    return true;
+  });
+
+  // ✅ Latest alert coordinates
   const latestAlert = alerts.length > 0 ? alerts[0] : null;
   const lat = latestAlert?.latitude;
   const lng = latestAlert?.longitude;
 
-  // ✅ Navigate to the full map page
   const goToMap = () => {
     history.push("/EmergTrack/app/police/home/maps");
   };
@@ -107,6 +216,7 @@ const Dashboard: React.FC = () => {
       </IonHeader>
 
       <IonContent className="ion-padding">
+        {/* Dashboard Summary */}
         {loading ? (
           <div style={{ textAlign: "center", marginTop: "20%" }}>
             <IonSpinner />
@@ -115,7 +225,6 @@ const Dashboard: React.FC = () => {
         ) : (
           <IonGrid>
             <IonRow>
-              {/* Unread (New) Alerts Count */}
               <IonCol size="12" sizeMd="6">
                 <IonCard color="danger">
                   <IonCardHeader>
@@ -127,7 +236,6 @@ const Dashboard: React.FC = () => {
                 </IonCard>
               </IonCol>
 
-              {/* Read Alerts Count */}
               <IonCol size="12" sizeMd="6">
                 <IonCard color="success">
                   <IonCardHeader>
@@ -140,8 +248,8 @@ const Dashboard: React.FC = () => {
               </IonCol>
             </IonRow>
 
+            {/* Map and Recent Alerts */}
             <IonRow>
-              {/* Latest Alert Map Preview */}
               <IonCol size="12" sizeMd="6">
                 <IonCard onClick={goToMap} button>
                   <IonCardHeader>
@@ -179,7 +287,6 @@ const Dashboard: React.FC = () => {
                 </IonCard>
               </IonCol>
 
-              {/* Recent Alerts List */}
               <IonCol size="12" sizeMd="6">
                 <IonCard>
                   <IonCardHeader>
@@ -209,6 +316,94 @@ const Dashboard: React.FC = () => {
                     <IonButton expand="block" onClick={goToMap}>
                       View All Alerts on Map
                     </IonButton>
+                  </IonCardContent>
+                </IonCard>
+              </IonCol>
+            </IonRow>
+
+            {/* ✅ Emergency Alerts Table Section */}
+            <IonRow>
+              <IonCol size="12">
+                <IonCard>
+                  <IonCardHeader>
+                    <IonCardTitle>Forwarded Emergency Alerts</IonCardTitle>
+                  </IonCardHeader>
+                  <IonCardContent>
+                    {/* Filter dropdown */}
+                    <IonSelect
+                      value={filter}
+                      placeholder="Filter alerts"
+                      onIonChange={(e) => setFilter(e.detail.value)}
+                    >
+                      <IonSelectOption value="all">All</IonSelectOption>
+                      <IonSelectOption value="pending">Pending</IonSelectOption>
+                      <IonSelectOption value="received">Received</IonSelectOption>
+                    </IonSelect>
+
+                    {tableLoading ? (
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          height: "40vh",
+                        }}
+                      >
+                        <IonSpinner name="crescent" />
+                      </div>
+                    ) : filteredAlerts.length === 0 ? (
+                      <div
+                        style={{
+                          textAlign: "center",
+                          marginTop: "20px",
+                          fontSize: "1.1rem",
+                          color: "gray",
+                        }}
+                      >
+                        🚨 No alerts found.
+                      </div>
+                    ) : (
+                      <IonGrid>
+                        <IonRow
+                          style={{ fontWeight: "bold", background: "#f1f1f1" }}
+                          className="ion-text-center ion-padding"
+                        >
+                          <IonCol>Emergency ID</IonCol>
+                          <IonCol>Student ID</IonCol>
+                          <IonCol>Latitude</IonCol>
+                          <IonCol>Longitude</IonCol>
+                          <IonCol>Date</IonCol>
+                          <IonCol>Parent ID</IonCol>
+                          <IonCol>Action</IonCol>
+                        </IonRow>
+
+                        {filteredAlerts.map((a) => (
+                          <IonRow
+                            key={a.emergency_id}
+                            className="ion-text-center ion-padding"
+                            style={{ borderBottom: "1px solid #ddd" }}
+                          >
+                            <IonCol>{a.emergency_id}</IonCol>
+                            <IonCol>{a.student_id}</IonCol>
+                            <IonCol>{a.latitude}</IonCol>
+                            <IonCol>{a.longitude}</IonCol>
+                            <IonCol>
+                              {new Date(a.created_at).toLocaleString()}
+                            </IonCol>
+                            <IonCol>{a.parent_id}</IonCol>
+                            <IonCol>
+                              <IonButton
+                                color={a.received ? "success" : "primary"}
+                                disabled={a.received}
+                                onClick={() => handleReceived(a)}
+                              >
+                                {a.received ? "Received ✅" : "Mark Received"}
+                              </IonButton>
+                            </IonCol>
+                          </IonRow>
+                        ))}
+                      </IonGrid>
+                    )}
                   </IonCardContent>
                 </IonCard>
               </IonCol>

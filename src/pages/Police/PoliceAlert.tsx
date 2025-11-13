@@ -17,7 +17,7 @@ import {
   IonSelectOption,
 } from "@ionic/react";
 import { useEffect, useState } from "react";
-import { supabase } from "../utils/supabaseClients";
+import { supabase } from "../../utils/supabaseClients";
 
 interface PoliceAlert {
   emergency_id: string; // bigint
@@ -30,7 +30,7 @@ interface PoliceAlert {
   received?: boolean;
 }
 
-const PolicePage: React.FC = () => {
+const PoliceAlert: React.FC = () => {
   const [alerts, setAlerts] = useState<PoliceAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "received" | "pending">("all");
@@ -214,4 +214,4 @@ const PolicePage: React.FC = () => {
   );
 };
 
-export default PolicePage;
+export default PoliceAlert;
