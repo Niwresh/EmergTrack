@@ -25,12 +25,10 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import "../../Assets/Maps.css";
 
-// Marker images
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
-// Default marker setup
 const DefaultIcon = L.Icon.Default.extend({
   options: {
     iconRetinaUrl: markerIcon2x,
@@ -58,7 +56,6 @@ function dmsToDecimal(dms: string): number | null {
   }
 }
 
-// Convert decimal to DMS
 function decimalToDMS(decimal: number, isLat: boolean): string {
   const dir = isLat ? (decimal >= 0 ? "N" : "S") : decimal >= 0 ? "E" : "W";
   const absVal = Math.abs(decimal);
@@ -69,7 +66,6 @@ function decimalToDMS(decimal: number, isLat: boolean): string {
   return `${deg}°${min}'${sec}"${dir}`;
 }
 
-// Map resizer
 const MapResizer: React.FC = () => {
   const map = useMap();
   useIonViewDidEnter(() => {
@@ -81,7 +77,6 @@ const MapResizer: React.FC = () => {
   return null;
 };
 
-// Map controller
 const MapController: React.FC<{ coords: LatLngExpression }> = ({ coords }) => {
   const map = useMap();
   useEffect(() => {
@@ -91,7 +86,6 @@ const MapController: React.FC<{ coords: LatLngExpression }> = ({ coords }) => {
   return null;
 };
 
-// Main Maps component
 const Maps: React.FC = () => {
   const location = useLocation();
   const [coords, setCoords] = useState<LatLngExpression>([14.5995, 120.9842]);
@@ -103,24 +97,24 @@ const Maps: React.FC = () => {
   const popupRef = useRef<L.Popup | null>(null);
   const mapRef = useRef<LeafletMap | null>(null);
 
-  // Fetch latest alert and subscribe
+  // Fetch latest alert for the parent's student
   useEffect(() => {
     let mounted = true;
-    const params = new URLSearchParams(location.search);
-    const latParam = parseFloat(params.get("lat") || "0");
-    const lngParam = parseFloat(params.get("lng") || "0");
 
-    if (!isNaN(latParam) && !isNaN(lngParam) && (latParam !== 0 || lngParam !== 0)) {
-      if (mounted) setCoords([latParam, lngParam]);
-      setLoading(false);
-      return;
-    }
-
-    const fetchLatestAlert = async () => {
+    const fetchLatestStudentAlert = async () => {
       setLoading(true);
+
+      // Get current logged-in parent
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user) return;
+
+      const parentId = userData.user.id;
+
+      // Fetch student's latest alert
       const { data, error } = await supabase
         .from("emergency_alerts")
-        .select("latitude, longitude")
+        .select("latitude, longitude, student_id")
+        .eq("parent_id", parentId) // ensure only parent's student alerts
         .order("created_at", { ascending: false })
         .limit(1)
         .single();
@@ -131,7 +125,7 @@ const Maps: React.FC = () => {
       setLoading(false);
     };
 
-    fetchLatestAlert();
+    fetchLatestStudentAlert();
 
     const channel = supabase
       .channel("realtime-alerts")
@@ -139,11 +133,14 @@ const Maps: React.FC = () => {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "emergency_alerts" },
         (payload) => {
-          const newAlert = payload.new as { latitude: number; longitude: number };
-          if (mounted && newAlert) {
-            setCoords([newAlert.latitude, newAlert.longitude]);
-            setLoading(false);
-          }
+          const newAlert = payload.new as { latitude: number; longitude: number; parent_id: string };
+          // Only update if the alert belongs to this parent
+          supabase.auth.getUser().then(({ data }) => {
+            if (data?.user && data.user.id === newAlert.parent_id && mounted) {
+              setCoords([newAlert.latitude, newAlert.longitude]);
+              setLoading(false);
+            }
+          });
         }
       )
       .subscribe();
@@ -154,7 +151,6 @@ const Maps: React.FC = () => {
     };
   }, [location.search]);
 
-  // Manual locate
   const handleManualLocate = () => {
     let lat: number | null = parseFloat(manualLat);
     let lng: number | null = parseFloat(manualLng);
