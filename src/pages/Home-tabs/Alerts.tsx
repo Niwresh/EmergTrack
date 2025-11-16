@@ -87,7 +87,7 @@ const Alerts: React.FC = () => {
         emergency_id: a.emergency_id.toString(),
         student_name: student?.student_name || "Unknown Student",
         status: a.status || false,
-        received: a.received || false, // map received column
+        received: a.received || false,
       };
     });
 
@@ -155,17 +155,19 @@ const Alerts: React.FC = () => {
     },
     rowData: {
       fontSize: "0.85rem",
+      wordWrap: "break-word" as const,
     },
     gridWrapper: {
       overflowX: "auto" as const,
+      width: "100%",
     },
     badge: {
       fontSize: "0.7rem",
       padding: "0.25em 0.5em",
     },
     button: {
-      fontSize: "0.75rem",
-      padding: "0.25em 0.5em",
+      fontSize: "0.7rem",
+      padding: "0.2em 0.4em",
     },
   };
 
@@ -195,21 +197,21 @@ const Alerts: React.FC = () => {
               <div style={styles.gridWrapper}>
                 <IonGrid>
                   <IonRow style={styles.rowHeader}>
-                    <IonCol size="2">Student Name</IonCol>
-                    <IonCol size="3">Message</IonCol>
-                    <IonCol size="2">Location</IonCol>
-                    <IonCol size="2">Date</IonCol>
-                    <IonCol size="1">Status</IonCol>
-                    <IonCol size="2">Received</IonCol>
+                    <IonCol size="6" sizeSm="4">Student Name</IonCol>
+                    <IonCol size="6" sizeSm="4">Message</IonCol>
+                    <IonCol size="6" sizeSm="4">Location</IonCol>
+                    <IonCol size="6" sizeSm="4">Date</IonCol>
+                    <IonCol size="6" sizeSm="2">Status</IonCol>
+                    <IonCol size="6" sizeSm="2">Received</IonCol>
                   </IonRow>
 
                   {alerts.map((alert) => (
                     <IonRow key={alert.emergency_id} style={{ borderBottom: "1px solid #ddd" }}>
-                      <IonCol size="2" style={styles.rowData}>👤 {alert.student_name}</IonCol>
-                      <IonCol size="3" style={styles.rowData}>{alert.message || "Emergency alert triggered!"}</IonCol>
-                      <IonCol size="2" style={styles.rowData}>📍 {alert.latitude}, {alert.longitude}</IonCol>
-                      <IonCol size="2" style={styles.rowData}>{new Date(alert.created_at).toLocaleString()}</IonCol>
-                      <IonCol size="1" style={styles.rowData}>
+                      <IonCol size="6" sizeSm="4" style={styles.rowData}>👤 {alert.student_name}</IonCol>
+                      <IonCol size="6" sizeSm="4" style={styles.rowData}>{alert.message || "Emergency alert triggered!"}</IonCol>
+                      <IonCol size="6" sizeSm="4" style={styles.rowData}>📍 {alert.latitude}, {alert.longitude}</IonCol>
+                      <IonCol size="6" sizeSm="4" style={styles.rowData}>{new Date(alert.created_at).toLocaleString()}</IonCol>
+                      <IonCol size="6" sizeSm="2" style={styles.rowData}>
                         {alert.status ? (
                           <IonBadge color="success" style={styles.badge}>Reported</IonBadge>
                         ) : (
@@ -218,7 +220,7 @@ const Alerts: React.FC = () => {
                           </IonButton>
                         )}
                       </IonCol>
-                      <IonCol size="2" style={styles.rowData}>
+                      <IonCol size="6" sizeSm="2" style={styles.rowData}>
                         {alert.received ? <IonBadge color="tertiary" style={styles.badge}>Received</IonBadge> : "Pending"}
                       </IonCol>
                     </IonRow>
