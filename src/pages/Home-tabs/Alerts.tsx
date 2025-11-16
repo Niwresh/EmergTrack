@@ -128,6 +128,47 @@ const Alerts: React.FC = () => {
     );
   };
 
+  // ---------- STYLES ----------
+  const styles = {
+    spinnerWrapper: {
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      height: "80vh",
+    },
+    noAlertText: {
+      textAlign: "center" as const,
+      marginTop: "20vh",
+      fontSize: "1.2rem",
+      color: "gray",
+      padding: "0 10px",
+    },
+    cardTitle: {
+      fontSize: "1.3rem",
+      fontWeight: "bold",
+      textAlign: "center" as const,
+    },
+    rowHeader: {
+      fontWeight: "bold",
+      background: "#f1f1f1",
+      fontSize: "0.85rem",
+    },
+    rowData: {
+      fontSize: "0.85rem",
+    },
+    gridWrapper: {
+      overflowX: "auto" as const,
+    },
+    badge: {
+      fontSize: "0.7rem",
+      padding: "0.25em 0.5em",
+    },
+    button: {
+      fontSize: "0.75rem",
+      padding: "0.25em 0.5em",
+    },
+  };
+
   return (
     <IonPage>
       <IonHeader>
@@ -138,50 +179,52 @@ const Alerts: React.FC = () => {
 
       <IonContent fullscreen>
         {loading ? (
-          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "80vh" }}>
+          <div style={styles.spinnerWrapper}>
             <IonSpinner name="crescent" />
           </div>
         ) : alerts.length === 0 ? (
-          <div style={{ textAlign: "center", marginTop: "20vh", fontSize: "1.2rem", color: "gray" }}>
-            👨‍👩‍👧 No alerts for your child yet.
-          </div>
+          <div style={styles.noAlertText}>👨‍👩‍👧 No alerts for your child yet.</div>
         ) : (
           <IonCard>
             <IonCardHeader>
-              <IonCardTitle>Your Child’s Emergency Alerts</IonCardTitle>
+              <IonCardTitle style={styles.cardTitle}>
+                Your Child’s Emergency Alerts
+              </IonCardTitle>
             </IonCardHeader>
             <IonCardContent>
-              <IonGrid>
-                <IonRow style={{ fontWeight: "bold", background: "#f1f1f1" }}>
-                  <IonCol size="2">Student Name</IonCol>
-                  <IonCol size="3">Message</IonCol>
-                  <IonCol size="2">Location</IonCol>
-                  <IonCol size="2">Date</IonCol>
-                  <IonCol size="1">Status</IonCol>
-                  <IonCol size="2">Received</IonCol>
-                </IonRow>
-
-                {alerts.map((alert) => (
-                  <IonRow key={alert.emergency_id} style={{ borderBottom: "1px solid #ddd" }}>
-                    <IonCol size="2">👤 {alert.student_name}</IonCol>
-                    <IonCol size="3">{alert.message || "Emergency alert triggered!"}</IonCol>
-                    <IonCol size="2">📍 {alert.latitude}, {alert.longitude}</IonCol>
-                    <IonCol size="2">{new Date(alert.created_at).toLocaleString()}</IonCol>
-                    <IonCol size="1">
-                      {alert.status ? (
-                        <IonBadge color="success">Reported</IonBadge>
-                      ) : (
-                        <IonButton color="primary" size="small" onClick={() => report(alert)}>
-                          Report
-                        </IonButton>
-                      )}
-                    </IonCol>
-                    <IonCol size="2">
-                      {alert.received ? <IonBadge color="tertiary">Received</IonBadge> : "Pending"}
-                    </IonCol>
+              <div style={styles.gridWrapper}>
+                <IonGrid>
+                  <IonRow style={styles.rowHeader}>
+                    <IonCol size="2">Student Name</IonCol>
+                    <IonCol size="3">Message</IonCol>
+                    <IonCol size="2">Location</IonCol>
+                    <IonCol size="2">Date</IonCol>
+                    <IonCol size="1">Status</IonCol>
+                    <IonCol size="2">Received</IonCol>
                   </IonRow>
-                ))}
-              </IonGrid>
+
+                  {alerts.map((alert) => (
+                    <IonRow key={alert.emergency_id} style={{ borderBottom: "1px solid #ddd" }}>
+                      <IonCol size="2" style={styles.rowData}>👤 {alert.student_name}</IonCol>
+                      <IonCol size="3" style={styles.rowData}>{alert.message || "Emergency alert triggered!"}</IonCol>
+                      <IonCol size="2" style={styles.rowData}>📍 {alert.latitude}, {alert.longitude}</IonCol>
+                      <IonCol size="2" style={styles.rowData}>{new Date(alert.created_at).toLocaleString()}</IonCol>
+                      <IonCol size="1" style={styles.rowData}>
+                        {alert.status ? (
+                          <IonBadge color="success" style={styles.badge}>Reported</IonBadge>
+                        ) : (
+                          <IonButton color="primary" size="small" style={styles.button} onClick={() => report(alert)}>
+                            Report
+                          </IonButton>
+                        )}
+                      </IonCol>
+                      <IonCol size="2" style={styles.rowData}>
+                        {alert.received ? <IonBadge color="tertiary" style={styles.badge}>Received</IonBadge> : "Pending"}
+                      </IonCol>
+                    </IonRow>
+                  ))}
+                </IonGrid>
+              </div>
             </IonCardContent>
           </IonCard>
         )}
