@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { 
   IonContent, 
   IonHeader, 
@@ -21,7 +22,8 @@ import {
   IonButtons,
   IonSelect,
   IonSelectOption,
-  IonMenuButton
+  IonMenuButton,
+  IonModal
 } from '@ionic/react';
 import { add, create, trash } from 'ionicons/icons';
 import { useEffect, useState } from 'react';
@@ -29,7 +31,7 @@ import { supabase } from '../utils/supabaseClients';
 
 const RegisterStudent: React.FC = () => {
   const [studentName, setStudentName] = useState('');
-  const [schoolId, setSchoolId] = useState(''); // renamed
+  const [schoolId, setSchoolId] = useState('');
   const [serial, setSerial] = useState('');
   const [deviceType, setDeviceType] = useState('');
   const [parentAddress, setParentAddress] = useState('');
@@ -39,7 +41,7 @@ const RegisterStudent: React.FC = () => {
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null); // UUID
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   // Fetch registered students
   const fetchStudents = async () => {
@@ -87,7 +89,6 @@ const RegisterStudent: React.FC = () => {
     }
 
     if (editingId) {
-      // Check if serial belongs to another student
       const { data: existing, error: checkError } = await supabase
         .from('students')
         .select('student_id')
@@ -106,7 +107,6 @@ const RegisterStudent: React.FC = () => {
         return;
       }
 
-      // Update existing student
       const { error: updateError } = await supabase
         .from('students')
         .update({
@@ -128,7 +128,6 @@ const RegisterStudent: React.FC = () => {
         fetchStudents();
       }
     } else {
-      // Insert new student
       const { data: existing, error: insertCheckError } = await supabase
         .from('students')
         .select('student_id')
@@ -169,7 +168,7 @@ const RegisterStudent: React.FC = () => {
   };
 
   const handleEdit = (s: any) => {
-    setEditingId(s.student_id); // UUID
+    setEditingId(s.student_id);
     setStudentName(s.student_name);
     setSchoolId(s.school_id);
     setSerial(s.nodemcu_serial);
@@ -202,26 +201,46 @@ const RegisterStudent: React.FC = () => {
     setShowToast(true);
   };
 
+  // ---- STYLES ----
+  const cardStyle = {
+    marginBottom: '15px',
+    border: '1px solid #ffd1d9',
+    borderRadius: '12px',
+    boxShadow: '0px 4px 12px rgba(0,0,0,0.08)',
+  };
+
+  const inputStyle = {
+    marginBottom: '12px',
+    '--background': '#fff4f6',
+    borderRadius: '8px',
+    padding: '10px'
+  };
+
+  const buttonStyle = {
+    marginTop: '10px',
+    borderRadius: '25px'
+  };
+
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar>
           <IonButtons slot='start'>
-             <IonMenuButton />
+            <IonMenuButton />
           </IonButtons>
           <IonTitle>Students</IonTitle>
         </IonToolbar>
       </IonHeader>
 
-      <IonContent fullscreen>
+      <IonContent fullscreen className="ion-padding">
         {loading ? (
-          <IonSpinner className="ion-padding" />
+          <IonSpinner className="ion-margin" />
         ) : students.length === 0 ? (
-          <p className="ion-padding">No students registered yet.</p>
+          <p>No students registered yet.</p>
         ) : (
           <IonList>
             {students.map((s) => (
-              <IonCard key={s.student_id}>
+              <IonCard key={s.student_id} style={cardStyle}>
                 <IonCardHeader>
                   <IonCardTitle>{s.student_name}</IonCardTitle>
                 </IonCardHeader>
@@ -232,10 +251,10 @@ const RegisterStudent: React.FC = () => {
                   <p><strong>Address:</strong> {s.parent_address}</p>
                   <p><strong>Phone:</strong> {s.parent_phone}</p>
                   <IonButtons>
-                    <IonButton onClick={() => handleEdit(s)}>
+                    <IonButton onClick={() => handleEdit(s)} style={buttonStyle}>
                       <IonIcon icon={create} slot="start" /> Edit
                     </IonButton>
-                    <IonButton color="danger" onClick={() => handleDelete(s.student_id)}>
+                    <IonButton color="danger" onClick={() => handleDelete(s.student_id)} style={buttonStyle}>
                       <IonIcon icon={trash} slot="start" /> Delete
                     </IonButton>
                   </IonButtons>
@@ -245,24 +264,30 @@ const RegisterStudent: React.FC = () => {
           </IonList>
         )}
 
-        {showForm && (
-          <IonList className="ion-padding">
-            <IonItem>
+        {/* ---- Modal Form ---- */}
+        <IonModal isOpen={showForm} onDidDismiss={resetForm} backdropDismiss={false}>
+          <IonHeader>
+            <IonToolbar>
+              <IonTitle>{editingId ? 'Edit Student' : 'Register Student'}</IonTitle>
+            </IonToolbar>
+          </IonHeader>
+          <IonContent className="ion-padding">
+            <IonItem style={inputStyle}>
               <IonLabel position="stacked">Student Name</IonLabel>
               <IonInput value={studentName} onIonChange={e => setStudentName(e.detail.value!)} />
             </IonItem>
 
-            <IonItem>
+            <IonItem style={inputStyle}>
               <IonLabel position="stacked">School ID</IonLabel>
               <IonInput value={schoolId} onIonChange={e => setSchoolId(e.detail.value!)} />
             </IonItem>
 
-            <IonItem>
+            <IonItem style={inputStyle}>
               <IonLabel position="stacked">NodeMCU Serial Number</IonLabel>
               <IonInput value={serial} onIonChange={e => setSerial(e.detail.value!)} />
             </IonItem>
 
-            <IonItem>
+            <IonItem style={inputStyle}>
               <IonLabel position="stacked">Device Type</IonLabel>
               <IonSelect value={deviceType} placeholder="Select Device" onIonChange={e => setDeviceType(e.detail.value)}>
                 <IonSelectOption value="ESP8266">ESP8266</IonSelectOption>
@@ -271,22 +296,22 @@ const RegisterStudent: React.FC = () => {
               </IonSelect>
             </IonItem>
 
-            <IonItem>
+            <IonItem style={inputStyle}>
               <IonLabel position="stacked">Parent Address</IonLabel>
               <IonInput value={parentAddress} onIonChange={e => setParentAddress(e.detail.value!)} />
             </IonItem>
 
-            <IonItem>
+            <IonItem style={inputStyle}>
               <IonLabel position="stacked">Parent Phone Number</IonLabel>
               <IonInput value={parentPhone} onIonChange={e => setParentPhone(e.detail.value!)} />
             </IonItem>
 
-            <IonButton expand="block" onClick={handleSave}>
+            <IonButton expand="block" onClick={handleSave} style={buttonStyle}>
               {editingId ? 'Update Student' : 'Register Student'}
             </IonButton>
             <IonButton expand="block" fill="clear" onClick={resetForm}>Cancel</IonButton>
-          </IonList>
-        )}
+          </IonContent>
+        </IonModal>
 
         {!showForm && (
           <IonFab vertical="bottom" horizontal="end" slot="fixed">
