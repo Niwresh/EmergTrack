@@ -22,7 +22,7 @@ import { supabase } from "../../utils/supabaseClients";
 interface PoliceAlert {
   emergency_id: string;
   student_id: string;
-  student_name?: string; // add student_name field
+  student_name?: string;
   latitude: number;
   longitude: number;
   created_at: string;
@@ -39,7 +39,6 @@ const PoliceAlert: React.FC = () => {
   const fetchPoliceAlerts = async () => {
     setLoading(true);
     try {
-      // Step 1: Fetch all emergency alerts with status=true
       const { data: alertsData, error: alertsError } = await supabase
         .from("emergency_alerts")
         .select("*")
@@ -48,14 +47,12 @@ const PoliceAlert: React.FC = () => {
 
       if (alertsError) throw alertsError;
 
-      // Step 2: Fetch all students (we'll match by student_id)
       const { data: studentsData, error: studentsError } = await supabase
         .from("students")
         .select("student_id, student_name");
 
       if (studentsError) throw studentsError;
 
-      // Step 3: Combine alerts with student names
       const combinedData = alertsData.map((alert) => {
         const student = studentsData.find((s) => s.student_id === alert.student_id);
         return {
@@ -106,11 +103,18 @@ const PoliceAlert: React.FC = () => {
     };
   }, []);
 
+  // ✅ FIXED — now updating FULL ROW so realtime sends lat/lng too
   const handleReceived = async (policeAlert: PoliceAlert) => {
     try {
       const { error } = await supabase
         .from("emergency_alerts")
-        .update({ received: true })
+        .update({
+          received: true,
+          latitude: policeAlert.latitude,
+          longitude: policeAlert.longitude,
+          student_id: policeAlert.student_id,
+          parent_id: policeAlert.parent_id,
+        })
         .eq("emergency_id", policeAlert.emergency_id);
 
       if (error) {
@@ -128,7 +132,6 @@ const PoliceAlert: React.FC = () => {
     }
   };
 
-  // Apply filter
   const filteredAlerts = alerts.filter((a) => {
     if (filter === "received") return a.received === true;
     if (filter === "pending") return !a.received;
@@ -149,7 +152,6 @@ const PoliceAlert: React.FC = () => {
             <IonCardTitle>Forwarded Emergency Alerts</IonCardTitle>
           </IonCardHeader>
           <IonCardContent>
-            {/* Filter dropdown */}
             <IonSelect
               value={filter}
               placeholder="Filter alerts"
@@ -205,7 +207,7 @@ const PoliceAlert: React.FC = () => {
                     style={{ borderBottom: "1px solid #ddd" }}
                   >
                     <IonCol>{policeAlert.emergency_id}</IonCol>
-                    
+                    <IonCol>{policeAlert.student_id}</IonCol>
                     <IonCol>{policeAlert.student_name}</IonCol>
                     <IonCol>{policeAlert.latitude}</IonCol>
                     <IonCol>{policeAlert.longitude}</IonCol>
