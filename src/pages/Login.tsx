@@ -113,8 +113,8 @@ const Login: React.FC = () => {
           {/* Moved logo INSIDE the centered container */}
           <div className="logo">
             <img
-              src="https://scontent.fceb2-1.fna.fbcdn.net/v/t1.15752-9/538959922_3879256525543014_5947897526488506572_n.jpg"
-              alt="App Logo"
+              src="https://ph.pinterest.com/pin/455778424810816838/"
+               alt="App Logo"
             />
             <h2>PARENT LOGIN</h2>
           </div>
