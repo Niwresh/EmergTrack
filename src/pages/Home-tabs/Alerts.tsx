@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   IonContent,
   IonHeader,
@@ -19,16 +20,17 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../utils/supabaseClients";
 
 interface EmergencyAlert {
-  emergency_id: string; // bigint handled as string
+  emergency_id: string;
   student_id: string;
   latitude: number;
   longitude: number;
   created_at: string;
   parent_id: string;
   status?: boolean;
-  received?: boolean; // added received
+  received?: boolean;
   student_name?: string;
   message?: string;
+  press_type?: string; // <-- ADDED
 }
 
 const Alerts: React.FC = () => {
@@ -69,7 +71,7 @@ const Alerts: React.FC = () => {
 
     const { data: alertsData, error: alertsError } = await supabase
       .from("emergency_alerts")
-      .select("*")
+      .select("*") // includes press_type now
       .in("student_id", studentIds)
       .order("created_at", { ascending: false });
 
@@ -87,7 +89,8 @@ const Alerts: React.FC = () => {
         emergency_id: a.emergency_id.toString(),
         student_name: student?.student_name || "Unknown Student",
         status: a.status || false,
-        received: a.received || false, // map received column
+        received: a.received || false,
+        press_type: a.press_type || null, // <-- MAP press_type
       };
     });
 
@@ -128,6 +131,32 @@ const Alerts: React.FC = () => {
     );
   };
 
+  // 👉 Function: Returns message + badge color based on press_type
+  const getMessageDisplay = (press_type?: string) => {
+    if (press_type === "Single Press") {
+      return (
+        <>
+          Location Update <IonBadge color="success">Single Press</IonBadge>
+        </>
+      );
+    }
+
+    if (press_type === "Multiple Press") {
+      return (
+        <>
+          Emergency Alert <IonBadge color="danger">Multiple Press</IonBadge>
+        </>
+      );
+    }
+
+    // default (no press_type)
+    return (
+      <>
+        Emergency alert triggered!
+      </>
+    );
+  };
+
   return (
     <IonPage>
       <IonHeader>
@@ -164,9 +193,13 @@ const Alerts: React.FC = () => {
                 {alerts.map((alert) => (
                   <IonRow key={alert.emergency_id} style={{ borderBottom: "1px solid #ddd" }}>
                     <IonCol size="2">👤 {alert.student_name}</IonCol>
-                    <IonCol size="3">{alert.message || "Emergency alert triggered!"}</IonCol>
+
+                    {/* NEW MESSAGE DISPLAY LOGIC */}
+                    <IonCol size="3">{getMessageDisplay(alert.press_type)}</IonCol>
+
                     <IonCol size="2">📍 {alert.latitude}, {alert.longitude}</IonCol>
                     <IonCol size="2">{new Date(alert.created_at).toLocaleString()}</IonCol>
+
                     <IonCol size="1">
                       {alert.status ? (
                         <IonBadge color="success">Reported</IonBadge>
@@ -176,6 +209,7 @@ const Alerts: React.FC = () => {
                         </IonButton>
                       )}
                     </IonCol>
+
                     <IonCol size="2">
                       {alert.received ? <IonBadge color="tertiary">Received</IonBadge> : "Pending"}
                     </IonCol>
